@@ -1,0 +1,35 @@
+/*
+ * Barokah marketplace design tokens.
+ *
+ * Defaults come from the design reference; the actual brand colors are
+ * overridden at runtime from settings (branding.primary_color and
+ * branding.secondary_color) by the settings store. Never hard-code these
+ * values in components — reference the CSS variables instead.
+ */
+
+:root {
+    --brand-primary: #ee4d2d;
+    --brand-primary-hover: #d94426;
+    --brand-primary-soft: #fff1ed;
+    --accent-red: #d0011b;
+    --accent-yellow: #ffbb00;
+    --accent-navy: #113366;
+    --accent-blue: #0053de;
+    --accent-cyan: #26aa99;
+    --bg-page: #f5f5f5;
+    --bg-surface: #ffffff;
+    --bg-muted: #fafafa;
+    --text-primary: #222222;
+    --text-secondary: #555555;
+    --text-muted: #888888;
+    --text-faint: #aaaaaa;
+    --text-inverse: #ffffff;
+    --border-default: #e8e8e8;
+    --border-soft: #f0f0f0;
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 4px 14px rgba(0, 0, 0, 0.12);
+    --container-max: 1200px;
+    --grid-gap: 10px;
+    --section-gap: 20px;
+    --font-marketplace: Arial, Helvetica, 'Noto Sans', sans-serif;
+}
