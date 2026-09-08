@@ -106,10 +106,14 @@ function decrement(): void {
                 </span>
             </nav>
 
-            <div class="grid gap-6 rounded-sm border border-[var(--border-default)] bg-white p-4 md:grid-cols-2 md:gap-10 md:p-6">
+            <div
+                class="grid gap-6 rounded-sm border border-[var(--border-default)] bg-white p-4 md:grid-cols-2 md:gap-10 md:p-6"
+            >
                 <!-- Gallery -->
                 <div class="md:sticky md:top-24 md:self-start">
-                    <div class="aspect-square overflow-hidden rounded-sm border border-[var(--border-default)] bg-[var(--bg-muted)]">
+                    <div
+                        class="aspect-square overflow-hidden rounded-sm border border-[var(--border-default)] bg-[var(--bg-muted)]"
+                    >
                         <img
                             v-if="activeImage"
                             :src="activeImage"
@@ -153,7 +157,9 @@ function decrement(): void {
                 <div class="flex flex-col">
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <h1 class="text-xl font-semibold text-[var(--text-primary)] md:text-2xl">
+                            <h1
+                                class="text-xl font-semibold text-[var(--text-primary)] md:text-2xl"
+                            >
                                 {{ product.name }}
                             </h1>
                             <p
@@ -161,7 +167,9 @@ function decrement(): void {
                                 class="mt-1.5 text-sm text-[var(--text-secondary)]"
                             >
                                 Sold by
-                                <span class="font-medium text-[var(--text-primary)]">
+                                <span
+                                    class="font-medium text-[var(--text-primary)]"
+                                >
                                     {{ product.seller.store_name }}
                                 </span>
                             </p>
@@ -179,33 +187,58 @@ function decrement(): void {
                     </div>
 
                     <!-- Price panel -->
-                    <div class="mt-5 rounded-sm bg-[var(--brand-primary-soft)] p-4">
-                        <p class="text-3xl font-semibold tracking-tight text-[var(--brand-primary)]">
+                    <div
+                        class="mt-5 rounded-sm bg-[var(--brand-primary-soft)] p-4"
+                    >
+                        <p
+                            class="text-3xl font-semibold tracking-tight text-[var(--brand-primary)]"
+                        >
                             {{ formatAmount(Number(product.price)) }}
                         </p>
-                        <p v-if="!isOutOfStock" class="mt-1 text-sm text-[var(--text-secondary)]">
+                        <p
+                            v-if="!isOutOfStock"
+                            class="mt-1 text-sm text-[var(--text-secondary)]"
+                        >
                             {{ product.stock }} available
                         </p>
                     </div>
 
                     <!-- Key facts -->
-                    <dl class="mt-5 grid grid-cols-2 gap-3 rounded-sm border border-[var(--border-soft)] p-4 text-sm sm:grid-cols-3">
+                    <dl
+                        class="mt-5 grid grid-cols-2 gap-3 rounded-sm border border-[var(--border-soft)] p-4 text-sm sm:grid-cols-3"
+                    >
                         <div>
-                            <dt class="text-[11px] text-[var(--text-muted)]">Category</dt>
-                            <dd class="mt-0.5 font-medium text-[var(--text-primary)]">
+                            <dt class="text-[11px] text-[var(--text-muted)]">
+                                Category
+                            </dt>
+                            <dd
+                                class="mt-0.5 font-medium text-[var(--text-primary)]"
+                            >
                                 {{ product.category?.name ?? '—' }}
                             </dd>
                         </div>
                         <div>
-                            <dt class="text-[11px] text-[var(--text-muted)]">Weight</dt>
-                            <dd class="mt-0.5 font-medium text-[var(--text-primary)]">
+                            <dt class="text-[11px] text-[var(--text-muted)]">
+                                Weight
+                            </dt>
+                            <dd
+                                class="mt-0.5 font-medium text-[var(--text-primary)]"
+                            >
                                 {{ weightLabel ?? '—' }}
                             </dd>
                         </div>
                         <div>
-                            <dt class="text-[11px] text-[var(--text-muted)]">Stock</dt>
-                            <dd class="mt-0.5 font-medium text-[var(--text-primary)]">
-                                {{ isOutOfStock ? 'Sold out' : `${product.stock} pcs` }}
+                            <dt class="text-[11px] text-[var(--text-muted)]">
+                                Stock
+                            </dt>
+                            <dd
+                                class="mt-0.5 font-medium text-[var(--text-primary)]"
+                            >
+                                {{
+                                    isOutOfStock
+                                        ? 'Sold out'
+                                        : `${product.stock} pcs`
+                                }}
                             </dd>
                         </div>
                     </dl>
@@ -220,7 +253,9 @@ function decrement(): void {
 
                     <!-- Quantity -->
                     <div class="mt-6">
-                        <p class="mb-2 text-sm font-medium text-[var(--text-primary)]">
+                        <p
+                            class="mb-2 text-sm font-medium text-[var(--text-primary)]"
+                        >
                             Quantity
                         </p>
                         <div
@@ -235,12 +270,16 @@ function decrement(): void {
                             >
                                 −
                             </button>
-                            <span class="w-12 text-center text-sm font-semibold text-[var(--text-primary)]">
+                            <span
+                                class="w-12 text-center text-sm font-semibold text-[var(--text-primary)]"
+                            >
                                 {{ quantity }}
                             </span>
                             <button
                                 type="button"
-                                :disabled="quantity >= product.stock || isOutOfStock"
+                                :disabled="
+                                    quantity >= product.stock || isOutOfStock
+                                "
                                 class="flex h-full w-10 items-center justify-center text-lg text-[var(--text-secondary)] disabled:opacity-40"
                                 aria-label="Increase quantity"
                                 @click="increment"
@@ -270,7 +309,9 @@ function decrement(): void {
                             >
                                 <circle cx="8" cy="21" r="1" />
                                 <circle cx="19" cy="21" r="1" />
-                                <path d="M2.05 2.05h2l2.66 12.54a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57L21 7H6" />
+                                <path
+                                    d="M2.05 2.05h2l2.66 12.54a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57L21 7H6"
+                                />
                             </svg>
                             Add to Cart
                         </button>
@@ -278,9 +319,13 @@ function decrement(): void {
                             :href="`/checkout/${product.slug}`"
                             :class="[
                                 'flex h-12 flex-1 items-center justify-center rounded-sm bg-[var(--brand-primary)] px-6 font-semibold text-white transition hover:bg-[var(--brand-primary-hover)]',
-                                isOutOfStock ? 'pointer-events-none opacity-50' : '',
+                                isOutOfStock
+                                    ? 'pointer-events-none opacity-50'
+                                    : '',
                             ]"
-                            @click="startBuy(product.id, product.slug, quantity)"
+                            @click="
+                                startBuy(product.id, product.slug, quantity)
+                            "
                         >
                             Buy Now
                         </Link>
@@ -292,5 +337,5 @@ function decrement(): void {
                 </div>
             </div>
         </div>
-        </MarketplaceLayout>
+    </MarketplaceLayout>
 </template>
