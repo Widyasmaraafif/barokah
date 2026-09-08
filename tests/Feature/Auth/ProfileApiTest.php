@@ -65,6 +65,17 @@ test('profile update validates email uniqueness', function () {
         ->assertJsonValidationErrors('email');
 });
 
+test('profile update rejects unknown state', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->putJson('/api/v1/me', [
+        'name' => $user->name,
+        'email' => $user->email,
+        'state' => 'Atlantis',
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('state');
+});
+
 test('authenticated buyer can change password with current password', function () {
     $user = User::factory()->create();
 

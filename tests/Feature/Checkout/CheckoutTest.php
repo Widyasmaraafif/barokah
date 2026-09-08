@@ -105,6 +105,17 @@ test('checkout accepts optional buyer email', function () {
         ->assertJsonPath('data.customer_email', 'buyer@example.com');
 });
 
+test('checkout rejects unknown buyer state', function () {
+    $product = checkoutProduct();
+
+    $this->postJson('/api/v1/orders', [
+        'product_id' => $product->id,
+        'quantity' => 1,
+        'buyer' => validBuyerPayload(['state' => 'Atlantis']),
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('buyer.state');
+});
+
 test('checkout rejects insufficient stock with 409 and keeps stock', function () {
     $product = checkoutProduct(['stock' => 1]);
 

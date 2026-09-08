@@ -139,3 +139,9 @@ test('quote validates address fields', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['address', 'state', 'post_code']);
 });
+
+test('quote rejects unknown state', function () {
+    $this->postJson('/api/v1/shipping/quote', shippingTestAddress(['state' => 'Atlantis']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('state');
+});

@@ -118,7 +118,7 @@ class OrderSeeder extends Seeder
                 'user_id' => null,
                 'customer_name' => 'Tetamu Melaka',
                 'customer_address' => 'No. 3, Jalan Hang Tuah, Melaka',
-                'customer_state' => 'Melaka',
+                'customer_state' => 'Malacca',
                 'customer_post_code' => '75000',
                 'customer_phone' => '016-9876543',
                 'customer_email' => null,

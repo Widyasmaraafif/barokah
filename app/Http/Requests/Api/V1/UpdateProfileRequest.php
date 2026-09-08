@@ -5,6 +5,7 @@ namespace App\Http\Requests\Api\V1;
 use App\Concerns\ProfileValidationRules;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
 {
@@ -29,7 +30,7 @@ class UpdateProfileRequest extends FormRequest
             // Phone/postcode formats are TBC (spec §24 item 5); only length is enforced.
             'phone' => ['nullable', 'string', 'max:30'],
             'address' => ['nullable', 'string', 'max:500'],
-            'state' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', Rule::in(config('malaysia.states', []))],
             'post_code' => ['nullable', 'string', 'max:20'],
         ]);
     }

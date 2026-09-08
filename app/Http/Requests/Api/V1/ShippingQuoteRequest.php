@@ -28,7 +28,7 @@ class ShippingQuoteRequest extends FormRequest
     {
         return [
             'address' => ['required', 'string', 'max:500'],
-            'state' => ['required', 'string', 'max:100'],
+            'state' => ['required', 'string', Rule::in(config('malaysia.states', []))],
             'post_code' => ['required', 'string', 'max:20'],
             'method' => ['nullable', 'string', Rule::in(['fixed', 'external'])],
             'subtotal' => ['nullable', 'numeric', 'min:0', 'max:100000000'],

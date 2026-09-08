@@ -41,7 +41,7 @@ class BuyerInformationRequest extends FormRequest
             'buyer' => ['required', 'array'],
             'buyer.name' => ['required', 'string', 'max:255'],
             'buyer.address' => ['required', 'string', 'max:500'],
-            'buyer.state' => ['required', 'string', 'max:100'],
+            'buyer.state' => ['required', 'string', Rule::in(config('malaysia.states', []))],
             'buyer.post_code' => ['required', 'string', 'max:20'],
             'buyer.phone' => ['required', 'string', 'max:30'],
             'buyer.email' => ['nullable', 'email', 'max:255'],

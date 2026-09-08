@@ -52,7 +52,7 @@ class UserSeeder extends Seeder
                 'email' => 'admin@barokah.local',
                 'phone' => '03-1234567',
                 'address' => 'Level 1, Jalan Tuanku Abdul Rahman',
-                'state' => 'Wilayah Persekutuan Kuala Lumpur',
+                'state' => 'Federal Territory of Kuala Lumpur',
                 'post_code' => '50000',
                 'is_admin' => true,
             ],

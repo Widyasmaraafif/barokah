@@ -3,6 +3,11 @@ import { Head, router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import { useCheckoutStore, type CheckoutStep } from '@/stores/checkout';
 import { useSettingsStore } from '@/stores/settings';
+import malaysiaStates from '@/data/malaysia-states.json';
+
+const malaysiaStateOptions: string[] = (malaysiaStates as { name: string }[]).map(
+    (stateOption) => stateOption.name,
+);
 
 type WizardProduct = {
     id: number;
@@ -306,12 +311,20 @@ function stopPolling(): void {
                         <div class="grid gap-3 sm:grid-cols-2">
                             <div>
                                 <label class="mb-1 block text-sm" for="buyer-state">State</label>
-                                <input
+                                <select
                                     id="buyer-state"
                                     v-model="buyer.state"
-                                    type="text"
-                                    class="h-10 w-full rounded border px-3 text-sm"
-                                />
+                                    class="h-10 w-full rounded border bg-white px-3 text-sm"
+                                >
+                                    <option value="" disabled>Select state</option>
+                                    <option
+                                        v-for="stateOption in malaysiaStateOptions"
+                                        :key="stateOption"
+                                        :value="stateOption"
+                                    >
+                                        {{ stateOption }}
+                                    </option>
+                                </select>
                                 <p v-if="fieldErrors.state" class="mt-1 text-xs text-red-600">
                                     {{ fieldErrors.state }}
                                 </p>
