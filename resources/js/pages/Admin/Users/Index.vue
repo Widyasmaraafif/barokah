@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
+import { Badge } from '@/components/ui/badge';
 import { index, edit, show } from '@/routes/admin/users';
 import { fetchAdminList } from '../useAdminList';
 
@@ -64,37 +65,77 @@ onMounted(async () => {
                 No customers yet.
             </p>
 
-            <ul v-else class="divide-y">
-                <li
-                    v-for="user in users"
-                    :key="user.id"
-                    class="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
-                >
-                    <div>
-                        <Link
-                            :href="show(user.id)"
-                            class="font-medium hover:underline"
+            <div v-else class="overflow-x-auto">
+                <table class="w-full min-w-[720px] text-left text-sm">
+                    <thead>
+                        <tr class="text-muted-foreground border-b font-medium">
+                            <th class="px-3 py-2 font-medium">Customer</th>
+                            <th class="px-3 py-2 font-medium">Role</th>
+                            <th class="px-3 py-2 font-medium">Seller</th>
+                            <th class="px-3 py-2 text-right font-medium">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="user in users"
+                            :key="user.id"
+                            class="hover:bg-muted/50 border-b transition-colors last:border-0"
                         >
-                            {{ user.name }}
-                        </Link>
-                        <p class="text-muted-foreground text-sm">{{ user.email }}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <p class="text-muted-foreground text-sm">
-                            {{ user.is_admin ? 'Admin' : 'Buyer' }}
-                            {{ user.is_active_as_seller ? '· Seller' : '' }}
-                        </p>
-                        <a
-                            :href="edit(user.id).url"
-                            target="_blank"
-                            rel="noopener"
-                            class="text-sm font-medium hover:underline"
-                        >
-                            Edit
-                        </a>
-                    </div>
-                </li>
-            </ul>
+                            <td class="px-3 py-2">
+                                <Link
+                                    :href="show(user.id)"
+                                    class="font-medium hover:underline"
+                                >
+                                    {{ user.name }}
+                                </Link>
+                                <p class="text-muted-foreground text-xs">
+                                    {{ user.email }}
+                                </p>
+                            </td>
+                            <td class="px-3 py-2">
+                                <Badge
+                                    :variant="
+                                        user.is_admin ? 'default' : 'secondary'
+                                    "
+                                >
+                                    {{ user.is_admin ? 'Admin' : 'Buyer' }}
+                                </Badge>
+                            </td>
+                            <td class="px-3 py-2">
+                                <Badge
+                                    v-if="user.is_active_as_seller"
+                                    variant="outline"
+                                >
+                                    Seller
+                                </Badge>
+                                <span v-else class="text-muted-foreground">-</span>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div
+                                    class="flex items-center justify-end gap-3"
+                                >
+                                    <Link
+                                        :href="show(user.id)"
+                                        class="text-muted-foreground text-sm hover:underline"
+                                    >
+                                        Detail
+                                    </Link>
+                                    <a
+                                        :href="edit(user.id).url"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-sm font-medium hover:underline"
+                                    >
+                                        Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </template>

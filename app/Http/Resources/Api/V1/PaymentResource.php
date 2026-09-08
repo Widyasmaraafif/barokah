@@ -26,6 +26,7 @@ class PaymentResource extends JsonResource
         $payload = is_array($this->payload) ? $this->payload : [];
 
         return [
+            'id' => $this->id,
             'order_number' => $this->whenLoaded('order', fn () => $this->order->order_number, $request->route('orderNumber')),
             'payment_gateway' => $this->payment_gateway,
             'payment_method' => $this->payment_method instanceof \BackedEnum ? $this->payment_method->value : $this->payment_method,

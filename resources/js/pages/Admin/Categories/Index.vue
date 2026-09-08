@@ -74,34 +74,52 @@ onMounted(async () => {
                 No categories yet.
             </p>
 
-            <ul v-else class="divide-y">
-                <li
-                    v-for="category in categories"
-                    :key="category.id"
-                    class="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
-                >
-                    <div>
-                        <p class="font-medium">{{ category.name }}</p>
-                        <p class="text-muted-foreground text-sm">{{ category.slug }}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <p
-                            v-if="category.products_count !== undefined"
-                            class="text-muted-foreground text-sm"
+            <div v-else class="overflow-x-auto">
+                <table class="w-full min-w-[560px] text-left text-sm">
+                    <thead>
+                        <tr class="text-muted-foreground border-b font-medium">
+                            <th class="px-3 py-2 font-medium">Category</th>
+                            <th class="px-3 py-2 text-right font-medium">
+                                Products
+                            </th>
+                            <th class="px-3 py-2 text-right font-medium">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="category in categories"
+                            :key="category.id"
+                            class="hover:bg-muted/50 border-b transition-colors last:border-0"
                         >
-                            {{ category.products_count }} products
-                        </p>
-                        <a
-                            :href="edit(category.id).url"
-                            target="_blank"
-                            rel="noopener"
-                            class="text-sm font-medium hover:underline"
-                        >
-                            Edit
-                        </a>
-                    </div>
-                </li>
-            </ul>
+                            <td class="px-3 py-2">
+                                <p class="font-medium">{{ category.name }}</p>
+                                <p class="text-muted-foreground text-xs">
+                                    {{ category.slug }}
+                                </p>
+                            </td>
+                            <td class="px-3 py-2 text-right">
+                                {{ category.products_count ?? '-' }}
+                            </td>
+                            <td class="px-3 py-2">
+                                <div
+                                    class="flex items-center justify-end gap-3"
+                                >
+                                    <a
+                                        :href="edit(category.id).url"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-sm font-medium hover:underline"
+                                    >
+                                        Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </template>

@@ -2,15 +2,20 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
+import { Badge } from '@/components/ui/badge';
 import { index, edit, show } from '@/routes/admin/products';
+import { formatPrice } from '@/services/priceFormatter';
 import { fetchAdminList } from '../useAdminList';
 
 type AdminProduct = {
     id: number;
     name: string;
+    slug: string;
     status: string;
     price: string | number;
     stock: number;
+    seller?: { id: number; store_name: string } | null;
+    category?: { id: number; name: string } | null;
 };
 
 defineOptions({
@@ -27,6 +32,25 @@ defineOptions({
 const products = ref<AdminProduct[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+
+function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+    switch (status) {
+        case 'active':
+            return 'default';
+        case 'archived':
+            return 'destructive';
+        case 'inactive':
+            return 'outline';
+        default:
+            return 'secondary';
+    }
+}
+
+function displayPrice(price: string | number): string {
+    const amount = typeof price === 'number' ? price : Number(price);
+
+    return Number.isFinite(amount) ? formatPrice(amount) : String(price);
+}
 
 onMounted(async () => {
     try {
@@ -67,36 +91,87 @@ onMounted(async () => {
                 No products yet.
             </p>
 
-            <ul v-else class="divide-y">
-                <li
-                    v-for="product in products"
-                    :key="product.id"
-                    class="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
-                >
-                    <div>
-                        <Link
-                            :href="show(product.id)"
-                            class="font-medium hover:underline"
+            <div v-else class="overflow-x-auto">
+                <table class="w-full min-w-[760px] text-left text-sm">
+                    <thead>
+                        <tr
+                            class="text-muted-foreground border-b font-medium"
                         >
-                            {{ product.name }}
-                        </Link>
-                        <p class="text-muted-foreground text-sm">
-                            Stock: {{ product.stock }}
-                        </p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <p class="text-muted-foreground text-sm">{{ product.status }}</p>
-                        <a
-                            :href="edit(product.id).url"
-                            target="_blank"
-                            rel="noopener"
-                            class="text-sm font-medium hover:underline"
+                            <th class="px-3 py-2 font-medium">Product</th>
+                            <th class="px-3 py-2 font-medium">Store</th>
+                            <th class="px-3 py-2 font-medium">Category</th>
+                            <th class="px-3 py-2 text-right font-medium">
+                                Price
+                            </th>
+                            <th class="px-3 py-2 text-right font-medium">
+                                Stock
+                            </th>
+                            <th class="px-3 py-2 font-medium">Status</th>
+                            <th class="px-3 py-2 text-right font-medium">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="product in products"
+                            :key="product.id"
+                            class="hover:bg-muted/50 border-b transition-colors last:border-0"
                         >
-                            Edit
-                        </a>
-                    </div>
-                </li>
-            </ul>
+                            <td class="px-3 py-2">
+                                <Link
+                                    :href="show(product.id)"
+                                    class="font-medium hover:underline"
+                                >
+                                    {{ product.name }}
+                                </Link>
+                                <p
+                                    class="text-muted-foreground text-xs"
+                                >
+                                    {{ product.slug }}
+                                </p>
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ product.seller?.store_name ?? '-' }}
+                            </td>
+                            <td class="px-3 py-2">
+                                {{ product.category?.name ?? '-' }}
+                            </td>
+                            <td class="px-3 py-2 text-right whitespace-nowrap">
+                                {{ displayPrice(product.price) }}
+                            </td>
+                            <td class="px-3 py-2 text-right">
+                                {{ product.stock }}
+                            </td>
+                            <td class="px-3 py-2">
+                                <Badge :variant="statusVariant(product.status)">
+                                    {{ product.status }}
+                                </Badge>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div
+                                    class="flex items-center justify-end gap-3"
+                                >
+                                    <Link
+                                        :href="show(product.id)"
+                                        class="text-muted-foreground text-sm hover:underline"
+                                    >
+                                        Detail
+                                    </Link>
+                                    <a
+                                        :href="edit(product.id).url"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-sm font-medium hover:underline"
+                                    >
+                                        Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </template>

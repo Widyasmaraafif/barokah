@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
+import { Badge } from '@/components/ui/badge';
 import { index, edit, show } from '@/routes/admin/sellers';
 import { fetchAdminList } from '../useAdminList';
 
@@ -26,6 +27,19 @@ defineOptions({
 const sellers = ref<AdminSeller[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+
+function statusVariant(
+    status: string,
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+    switch (status) {
+        case 'active':
+            return 'default';
+        case 'suspended':
+            return 'destructive';
+        default:
+            return 'secondary';
+    }
+}
 
 onMounted(async () => {
     try {
@@ -63,31 +77,63 @@ onMounted(async () => {
                 No stores yet.
             </p>
 
-            <ul v-else class="divide-y">
-                <li
-                    v-for="seller in sellers"
-                    :key="seller.id"
-                    class="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
-                >
-                    <Link
-                        :href="show(seller.id)"
-                        class="font-medium hover:underline"
-                    >
-                        {{ seller.store_name }}
-                    </Link>
-                    <div class="flex items-center gap-3">
-                        <p class="text-muted-foreground text-sm">{{ seller.status }}</p>
-                        <a
-                            :href="edit(seller.id).url"
-                            target="_blank"
-                            rel="noopener"
-                            class="text-sm font-medium hover:underline"
+            <div v-else class="overflow-x-auto">
+                <table class="w-full min-w-[640px] text-left text-sm">
+                    <thead>
+                        <tr class="text-muted-foreground border-b font-medium">
+                            <th class="px-3 py-2 font-medium">Store</th>
+                            <th class="px-3 py-2 font-medium">Status</th>
+                            <th class="px-3 py-2 text-right font-medium">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="seller in sellers"
+                            :key="seller.id"
+                            class="hover:bg-muted/50 border-b transition-colors last:border-0"
                         >
-                            Edit
-                        </a>
-                    </div>
-                </li>
-            </ul>
+                            <td class="px-3 py-2">
+                                <Link
+                                    :href="show(seller.id)"
+                                    class="font-medium hover:underline"
+                                >
+                                    {{ seller.store_name }}
+                                </Link>
+                                <p class="text-muted-foreground text-xs">
+                                    {{ seller.slug }}
+                                </p>
+                            </td>
+                            <td class="px-3 py-2">
+                                <Badge :variant="statusVariant(seller.status)">
+                                    {{ seller.status }}
+                                </Badge>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div
+                                    class="flex items-center justify-end gap-3"
+                                >
+                                    <Link
+                                        :href="show(seller.id)"
+                                        class="text-muted-foreground text-sm hover:underline"
+                                    >
+                                        Detail
+                                    </Link>
+                                    <a
+                                        :href="edit(seller.id).url"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-sm font-medium hover:underline"
+                                    >
+                                        Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </template>
