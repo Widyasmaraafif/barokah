@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { getMalaysiaCities } from '@/composables/useMalaysiaCities';
 import { index, show } from '@/routes/admin/users';
 import malaysiaStates from '@/data/malaysia-states.json';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 
 type AdminUserDetail = {
     id: number;
@@ -172,7 +173,9 @@ async function save(): Promise<void> {
 
                 <div class="grid gap-2">
                     <Label for="address">Address</Label>
-                    <Input id="address" v-model="form.address" type="text" />
+                    <RichTextEditor
+                        v-model="form.address"
+                    />
                     <InputError :message="errors.address" />
                 </div>
 

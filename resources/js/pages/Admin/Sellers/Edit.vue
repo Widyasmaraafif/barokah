@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { getMalaysiaCities } from '@/composables/useMalaysiaCities';
 import { index, show } from '@/routes/admin/sellers';
 import malaysiaStates from '@/data/malaysia-states.json';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 
 type AdminSellerDetail = {
     id: number;
@@ -231,11 +232,8 @@ async function save(): Promise<void> {
 
                 <div class="grid gap-2">
                     <Label for="description">Description</Label>
-                    <textarea
-                        id="description"
+                    <RichTextEditor
                         v-model="form.description"
-                        rows="4"
-                        class="border-input min-h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
                     />
                     <InputError :message="errors.description" />
                 </div>

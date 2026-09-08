@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { index, show } from '@/routes/admin/products';
 import { fetchAdminList } from '../useAdminList';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 
 type ProductImage = {
     id: number;
@@ -263,12 +264,15 @@ const existingImages = computed(() =>
 
                 <div class="grid gap-2">
                     <Label for="description">Description</Label>
-                    <textarea
+                    <RichTextEditor
+                        v-model="form.description"
+                    />
+                    <!-- <textarea
                         id="description"
                         v-model="form.description"
                         rows="4"
                         class="border-input min-h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
-                    />
+                    /> -->
                     <InputError :message="errors.description" />
                 </div>
 
