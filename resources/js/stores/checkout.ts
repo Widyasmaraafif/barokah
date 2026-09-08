@@ -43,10 +43,10 @@ const state = reactive<CheckoutState>({
 const orderNumber = ref<string | null>(null);
 
 export function useCheckoutStore() {
-    function startBuy(productId: number, slug: string): void {
+    function startBuy(productId: number, slug: string, quantity = 1): void {
         state.productId = productId;
         state.productSlug = slug;
-        state.quantity = 1;
+        state.quantity = quantity;
         state.step = 1;
         orderNumber.value = null;
     }

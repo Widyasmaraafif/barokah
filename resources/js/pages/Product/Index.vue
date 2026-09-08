@@ -84,7 +84,7 @@ function resetFilters(): void {
         <div class="mx-auto w-full max-w-[1200px] px-4 py-6">
         <div class="flex flex-col gap-6 md:flex-row">
             <aside class="w-full shrink-0 md:w-[200px]">
-                <div class="rounded border p-4">
+                <div class="rounded border border-[var(--border-default)] p-4">
                     <h2 class="mb-3 text-sm font-semibold">Categories</h2>
                     <ul class="space-y-1 text-sm">
                         <li>
@@ -136,12 +136,12 @@ function resetFilters(): void {
                         v-model="search"
                         type="search"
                         placeholder="Search products"
-                        class="h-10 flex-1 rounded border px-3 text-sm"
+                        class="h-10 flex-1 rounded border border-[var(--border-default)] px-3 text-sm"
                         @keyup.enter="applyFilters"
                     />
                     <select
                         v-model="sort"
-                        class="h-10 rounded border px-3 text-sm"
+                        class="h-10 rounded border border-[var(--border-default)] px-3 text-sm"
                         @change="applyFilters"
                     >
                         <option
@@ -156,7 +156,7 @@ function resetFilters(): void {
 
                 <p
                     v-if="isEmpty"
-                    class="rounded border p-8 text-center text-sm text-muted-foreground"
+                    class="rounded border border-[var(--border-default)] p-8 text-center text-sm text-muted-foreground"
                 >
                     No products found. Try changing filters.
                     <button
@@ -176,7 +176,7 @@ function resetFilters(): void {
                         v-for="product in products.data"
                         :key="product.id"
                         :href="`/products/${product.slug}`"
-                        class="group overflow-hidden rounded border bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+                        class="group overflow-hidden rounded-sm border border-[var(--border-soft)] bg-white transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-hover)]"
                     >
                         <div class="aspect-square bg-white">
                             <img
@@ -220,7 +220,7 @@ function resetFilters(): void {
                         :key="index"
                         :href="link.url ?? '#'"
                         :class="[
-                            'rounded border px-3 py-1 text-sm',
+                            'rounded border border-[var(--border-default)] px-3 py-1 text-sm',
                             link.active
                                 ? 'border-[var(--brand-primary)] font-semibold text-[var(--brand-primary)]'
                                 : 'text-muted-foreground',
