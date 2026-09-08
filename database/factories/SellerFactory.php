@@ -26,6 +26,13 @@ class SellerFactory extends Factory
             'store_name' => $storeName,
             'slug' => str()->slug($storeName).'-'.fake()->unique()->randomNumber(5),
             'description' => fake()->sentence(),
+            'profile_photo_path' => null,
+            'phone' => fake()->optional()->phoneNumber(),
+            'whatsapp' => fake()->optional()->phoneNumber(),
+            'store_location' => fake()->optional()->address(),
+            'bank_account' => fake()->optional()->sentence(6),
+            'state' => 'Selangor',
+            'city' => 'Shah Alam',
             'status' => SellerStatus::Active,
         ];
     }

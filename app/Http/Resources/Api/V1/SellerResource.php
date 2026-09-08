@@ -21,6 +21,13 @@ class SellerResource extends JsonResource
             'store_name' => $this->store_name,
             'slug' => $this->slug,
             'description' => $this->description,
+            'profile_photo_url' => $this->profile_photo_url,
+            'phone' => $this->phone,
+            'whatsapp' => $this->whatsapp,
+            'store_location' => $this->store_location,
+            'bank_account' => $this->bank_account,
+            'state' => $this->state,
+            'city' => $this->city,
             'status' => $this->status instanceof \BackedEnum ? $this->status->value : $this->status,
         ];
     }
