@@ -9,25 +9,29 @@ import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
 import { useSettingsStore } from '@/stores/settings';
 import type { HomeCategoryItem, HomeProductItem } from '@/types/marketplace';
 
-defineProps<{
-    categories: HomeCategoryItem[];
-    latestProducts: HomeProductItem[];
-    flashSaleProducts: HomeProductItem[];
-    bestSellerProducts: HomeProductItem[];
+const props = defineProps<{
+    categories: HomeCategoryItem[] | { data: HomeCategoryItem[] };
+    latestProducts: HomeProductItem[] | { data: HomeProductItem[] };
+    flashSaleProducts: HomeProductItem[] | { data: HomeProductItem[] };
+    bestSellerProducts: HomeProductItem[] | { data: HomeProductItem[] };
 }>();
 
 const { loadSettings } = useSettingsStore();
 
 void loadSettings();
+
+function unwrap<T>(value: T[] | { data: T[] }): T[] {
+    return Array.isArray(value) ? value : (value?.data ?? []);
+}
 </script>
 
 <template>
     <MarketplaceLayout>
         <QuickServices />
-        <FlashSaleSection :products="flashSaleProducts" />
-        <BestSellerSection :products="bestSellerProducts" />
+        <FlashSaleSection :products="unwrap(flashSaleProducts)" />
+        <BestSellerSection :products="unwrap(bestSellerProducts)" />
         <LiveSection />
-        <CategorySection :categories="categories" />
-        <RecommendationSection :products="latestProducts" />
+        <CategorySection :categories="unwrap(categories)" />
+        <RecommendationSection :products="unwrap(latestProducts)" />
     </MarketplaceLayout>
 </template>
