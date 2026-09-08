@@ -29,6 +29,13 @@ type AdminSellerDetail = {
     slug: string;
     status: string;
     description?: string | null;
+    profile_photo_url?: string | null;
+    phone?: string | null;
+    whatsapp?: string | null;
+    store_location?: string | null;
+    bank_account?: string | null;
+    state?: string | null;
+    city?: string | null;
     created_at?: string | null;
     updated_at?: string | null;
     owner: AdminSellerOwner;
@@ -71,6 +78,16 @@ function displayMoney(value: string | number): string {
 
 function displayText(value: string | null | undefined): string {
     return value === null || value === undefined || value === '' ? '-' : value;
+}
+
+function whatsappLink(value: string | null | undefined): string | null {
+    if (!value) {
+        return null;
+    }
+
+    const digits = value.replace(/\D/g, '');
+
+    return digits === '' ? null : `https://wa.me/${digits}`;
 }
 </script>
 
@@ -140,6 +157,91 @@ function displayText(value: string | null | undefined): string {
                         </th>
                         <td class="px-3 py-2">
                             {{ seller.description ?? 'No description.' }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-40 px-3 py-2 align-top font-medium"
+                        >
+                            Profile photo
+                        </th>
+                        <td class="px-3 py-2">
+                            <img
+                                v-if="seller.profile_photo_url"
+                                :src="seller.profile_photo_url"
+                                :alt="seller.store_name"
+                                class="h-20 w-20 rounded border object-cover"
+                            />
+                            <span v-else class="text-muted-foreground">-</span>
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-40 px-3 py-2 align-top font-medium"
+                        >
+                            Phone number
+                        </th>
+                        <td class="px-3 py-2">
+                            {{ displayText(seller.phone) }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-40 px-3 py-2 align-top font-medium"
+                        >
+                            WhatsApp
+                        </th>
+                        <td class="px-3 py-2">
+                            <a
+                                v-if="whatsappLink(seller.whatsapp)"
+                                :href="whatsappLink(seller.whatsapp)!"
+                                target="_blank"
+                                rel="noopener"
+                                class="font-medium hover:underline"
+                            >
+                                {{ seller.whatsapp }}
+                            </a>
+                            <span v-else class="text-muted-foreground">-</span>
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-40 px-3 py-2 align-top font-medium"
+                        >
+                            Store location
+                        </th>
+                        <td class="px-3 py-2">
+                            {{ displayText(seller.store_location) }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-40 px-3 py-2 align-top font-medium"
+                        >
+                            Bank account
+                        </th>
+                        <td class="px-3 py-2">
+                            {{ displayText(seller.bank_account) }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-40 px-3 py-2 align-top font-medium"
+                        >
+                            State
+                        </th>
+                        <td class="px-3 py-2">
+                            {{ displayText(seller.state) }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-40 px-3 py-2 align-top font-medium"
+                        >
+                            City
+                        </th>
+                        <td class="px-3 py-2">
+                            {{ displayText(seller.city) }}
                         </td>
                     </tr>
                     <tr class="border-b last:border-0">

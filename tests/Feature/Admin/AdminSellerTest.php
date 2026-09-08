@@ -3,6 +3,8 @@
 use App\Models\Product;
 use App\Models\Seller;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 function adminSellerEditor(): User
@@ -68,6 +70,64 @@ test('admin can update seller profile fields', function () {
     expect($seller->refresh())
         ->store_name->toBe('Kedai Baharu')
         ->slug->toBe('kedai-baharu');
+});
+
+test('admin can update seller contact location bank and city fields', function () {
+    $admin = adminSellerEditor();
+    $seller = Seller::factory()->create();
+
+    $response = $this->actingAs($admin)->putJson("/api/v1/admin/sellers/{$seller->id}", [
+        'phone' => '03-55123456',
+        'whatsapp' => '60123456789',
+        'store_location' => 'No. 12, Jalan Meru, Klang',
+        'bank_account' => 'Maybank a.n. Nama Pemilik Rekening 1234567890',
+        'state' => 'Selangor',
+        'city' => 'Klang',
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.phone', '03-55123456')
+        ->assertJsonPath('data.whatsapp', '60123456789')
+        ->assertJsonPath('data.bank_account', 'Maybank a.n. Nama Pemilik Rekening 1234567890')
+        ->assertJsonPath('data.state', 'Selangor')
+        ->assertJsonPath('data.city', 'Klang');
+
+    expect($seller->refresh())
+        ->store_location->toBe('No. 12, Jalan Meru, Klang')
+        ->bank_account->toBe('Maybank a.n. Nama Pemilik Rekening 1234567890');
+});
+
+test('admin seller update rejects city outside state', function () {
+    $admin = adminSellerEditor();
+    $seller = Seller::factory()->create();
+
+    $this->actingAs($admin)->putJson("/api/v1/admin/sellers/{$seller->id}", [
+        'state' => 'Selangor',
+        'city' => 'Johor Bahru',
+    ])->assertUnprocessable()->assertJsonValidationErrors('city');
+});
+
+test('admin can upload and remove seller profile photo', function () {
+    Storage::fake('public');
+    $admin = adminSellerEditor();
+    $seller = Seller::factory()->create();
+
+    $response = $this->actingAs($admin)->post("/api/v1/admin/sellers/{$seller->id}", [
+        '_method' => 'PUT',
+        'profile_photo' => UploadedFile::fake()->image('store.jpg'),
+    ]);
+
+    $response->assertOk();
+    $path = $seller->refresh()->profile_photo_path;
+    expect($path)->not->toBeNull();
+    Storage::disk('public')->assertExists($path);
+
+    $this->actingAs($admin)->putJson("/api/v1/admin/sellers/{$seller->id}", [
+        'remove_profile_photo' => true,
+    ])->assertOk();
+
+    expect($seller->refresh()->profile_photo_path)->toBeNull();
+    Storage::disk('public')->assertMissing($path);
 });
 
 test('admin seller update rejects duplicate store name', function () {

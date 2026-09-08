@@ -48,6 +48,13 @@ class SellerController extends Controller
             'slug' => $seller->slug,
             'status' => $seller->status instanceof \BackedEnum ? $seller->status->value : $seller->status,
             'description' => $seller->description,
+            'profile_photo_url' => $seller->profile_photo_url,
+            'phone' => $seller->phone,
+            'whatsapp' => $seller->whatsapp,
+            'store_location' => $seller->store_location,
+            'bank_account' => $seller->bank_account,
+            'state' => $seller->state,
+            'city' => $seller->city,
             'created_at' => $seller->created_at,
             'updated_at' => $seller->updated_at,
             'owner' => $seller->user ? [
