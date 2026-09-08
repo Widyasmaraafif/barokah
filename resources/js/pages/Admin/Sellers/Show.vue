@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
 import { index } from '@/routes/admin/sellers';
 
@@ -31,6 +31,12 @@ defineOptions({
     <Head title="Store detail" />
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
+        <Link
+            :href="index()"
+            class="text-muted-foreground w-fit text-sm hover:underline"
+        >
+            ← Back to Stores
+        </Link>
         <Heading
             variant="small"
             :title="seller.store_name"

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
-import { index } from '@/routes/admin/payments';
+import { index, show } from '@/routes/admin/payments';
 import { fetchAdminList } from '../useAdminList';
 
 type AdminPayment = {
@@ -72,9 +72,12 @@ onMounted(async () => {
                     :key="payment.id"
                     class="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
                 >
-                    <p class="font-medium">
+                    <Link
+                        :href="show(payment.id)"
+                        class="font-medium hover:underline"
+                    >
                         {{ payment.payment_method }} · {{ payment.amount }}
-                    </p>
+                    </Link>
                     <p class="text-muted-foreground text-sm">{{ payment.status }}</p>
                 </li>
             </ul>

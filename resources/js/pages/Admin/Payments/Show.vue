@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
 import { index } from '@/routes/admin/payments';
 
@@ -31,6 +31,12 @@ defineOptions({
     <Head title="PayNet transaction detail" />
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
+        <Link
+            :href="index()"
+            class="text-muted-foreground w-fit text-sm hover:underline"
+        >
+            ← Back to PayNet transactions
+        </Link>
         <Heading
             variant="small"
             :title="`${payment.payment_method} · ${payment.amount}`"

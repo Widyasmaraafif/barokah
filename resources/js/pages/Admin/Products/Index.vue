@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
-import { index } from '@/routes/admin/products';
+import { index, show } from '@/routes/admin/products';
 import { fetchAdminList } from '../useAdminList';
 
 type AdminProduct = {
@@ -74,7 +74,12 @@ onMounted(async () => {
                     class="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
                 >
                     <div>
-                        <p class="font-medium">{{ product.name }}</p>
+                        <Link
+                            :href="show(product.id)"
+                            class="font-medium hover:underline"
+                        >
+                            {{ product.name }}
+                        </Link>
                         <p class="text-muted-foreground text-sm">
                             Stock: {{ product.stock }}
                         </p>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
-import { index } from '@/routes/admin/users';
+import { index, show } from '@/routes/admin/users';
 import { fetchAdminList } from '../useAdminList';
 
 type AdminUser = {
@@ -71,7 +71,12 @@ onMounted(async () => {
                     class="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
                 >
                     <div>
-                        <p class="font-medium">{{ user.name }}</p>
+                        <Link
+                            :href="show(user.id)"
+                            class="font-medium hover:underline"
+                        >
+                            {{ user.name }}
+                        </Link>
                         <p class="text-muted-foreground text-sm">{{ user.email }}</p>
                     </div>
                     <p class="text-muted-foreground text-sm">

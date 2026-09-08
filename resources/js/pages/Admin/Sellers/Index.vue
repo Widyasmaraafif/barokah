@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
-import { index } from '@/routes/admin/sellers';
+import { index, show } from '@/routes/admin/sellers';
 import { fetchAdminList } from '../useAdminList';
 
 type AdminSeller = {
@@ -69,7 +69,12 @@ onMounted(async () => {
                     :key="seller.id"
                     class="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
                 >
-                    <p class="font-medium">{{ seller.store_name }}</p>
+                    <Link
+                        :href="show(seller.id)"
+                        class="font-medium hover:underline"
+                    >
+                        {{ seller.store_name }}
+                    </Link>
                     <p class="text-muted-foreground text-sm">{{ seller.status }}</p>
                 </li>
             </ul>

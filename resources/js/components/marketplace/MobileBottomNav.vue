@@ -1,13 +1,41 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { Bell, House, ShoppingCart, User } from '@lucide/vue';
+import { computed } from 'vue';
+import { home, login } from '@/routes';
+import { edit as profileEdit } from '@/routes/profile';
+import { index as productsIndex } from '@/routes/products';
+import { useCurrentUrl } from '@/composables/useCurrentUrl';
 
-const items = [
-    { label: 'Home', href: '/', icon: House, active: true },
-    { label: 'Feed', href: '/products', icon: Bell, placeholder: true },
-    { label: 'Cart', href: '/products', icon: ShoppingCart, placeholder: true },
-    { label: 'Me', href: '/products', icon: User, placeholder: true },
-];
+const page = usePage();
+const authUser = computed(
+    () =>
+        (page.props as unknown as { auth?: { user?: { id?: number } } })
+            .auth?.user,
+);
+const { isCurrentUrl } = useCurrentUrl();
+
+const items = computed(() => [
+    { label: 'Home', href: home(), icon: House, placeholder: false },
+    {
+        label: 'Feed',
+        href: productsIndex(),
+        icon: Bell,
+        placeholder: true,
+    },
+    {
+        label: 'Cart',
+        href: productsIndex(),
+        icon: ShoppingCart,
+        placeholder: true,
+    },
+    {
+        label: 'Me',
+        href: authUser.value ? profileEdit() : login(),
+        icon: User,
+        placeholder: false,
+    },
+]);
 </script>
 
 <template>
@@ -28,7 +56,7 @@ const items = [
                 "
                 :class="[
                     'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px]',
-                    item.active
+                    isCurrentUrl(item.href)
                         ? 'font-semibold text-[var(--brand-primary)]'
                         : 'text-[var(--text-muted)]',
                 ]"

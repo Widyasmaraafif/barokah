@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
-import { index } from '@/routes/admin/orders';
+import { index, show } from '@/routes/admin/orders';
 import { fetchAdminList } from '../useAdminList';
 
 type AdminOrderListItem = {
@@ -74,7 +74,12 @@ onMounted(async () => {
                     class="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
                 >
                     <div>
-                        <p class="font-medium">{{ order.order_number }}</p>
+                        <Link
+                            :href="show(order.order_number)"
+                            class="font-medium hover:underline"
+                        >
+                            {{ order.order_number }}
+                        </Link>
                         <p class="text-muted-foreground text-sm">
                             {{ order.created_at }}
                         </p>

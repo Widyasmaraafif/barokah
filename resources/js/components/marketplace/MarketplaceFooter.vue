@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { index as productsIndex } from '@/routes/products';
+import { dashboard as sellerDashboard } from '@/routes/seller';
 import { useSettingsStore } from '@/stores/settings';
 
 const { getSettingValue, loadSettings } = useSettingsStore();
@@ -31,18 +33,18 @@ const siteName = computed(() =>
             <nav aria-label="Shop">
                 <p class="text-sm font-semibold">Shop</p>
                 <ul class="mt-2 space-y-1.5 text-xs text-[var(--text-secondary)]">
-                    <li><Link href="/products" class="hover:underline">All products</Link></li>
-                    <li><Link href="/products?category=keripik" class="hover:underline">Keripik</Link></li>
-                    <li><Link href="/products?category=hijab" class="hover:underline">Hijab</Link></li>
-                    <li><Link href="/products?category=kerudung" class="hover:underline">Kerudung</Link></li>
+                    <li><Link :href="productsIndex()" class="hover:underline">All products</Link></li>
+                    <li><Link :href="productsIndex({ query: { category: 'keripik' } })" class="hover:underline">Keripik</Link></li>
+                    <li><Link :href="productsIndex({ query: { category: 'hijab' } })" class="hover:underline">Hijab</Link></li>
+                    <li><Link :href="productsIndex({ query: { category: 'kerudung' } })" class="hover:underline">Kerudung</Link></li>
                 </ul>
             </nav>
             <nav aria-label="Account">
                 <p class="text-sm font-semibold">Account</p>
                 <ul class="mt-2 space-y-1.5 text-xs text-[var(--text-secondary)]">
-                    <li><Link href="/products" class="hover:underline">Track order</Link></li>
-                    <li><Link href="/products" class="hover:underline">Seller center</Link></li>
-                    <li><Link href="/products" class="hover:underline">Help</Link></li>
+                    <li><Link :href="productsIndex()" class="hover:underline" title="Track order is a UI placeholder (TBC, no backend)">Track order</Link></li>
+                    <li><Link :href="sellerDashboard()" class="hover:underline">Seller center</Link></li>
+                    <li><Link :href="productsIndex()" class="hover:underline" title="Help is a UI placeholder (TBC, no backend)">Help</Link></li>
                 </ul>
             </nav>
             <div>

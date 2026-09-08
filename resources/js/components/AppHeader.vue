@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from '@lucide/vue';
+import {
+    BookOpen,
+    Folder,
+    House,
+    LayoutGrid,
+    Menu,
+    Search,
+    ShoppingBag,
+    Store,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
@@ -35,8 +44,11 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
 import { toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
-import type { BreadcrumbItem, NavItem } from '@/types';
+import { dashboard, home } from '@/routes';
+import { dashboard as adminDashboard } from '@/routes/admin';
+import { index as productsIndex } from '@/routes/products';
+import { dashboard as sellerDashboard } from '@/routes/seller';
+import type { BreadcrumbItem, NavItem, User } from '@/types';
 
 type Props = {
     breadcrumbs?: BreadcrumbItem[];
@@ -48,18 +60,56 @@ const props = withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
+const authUser = computed(
+    () =>
+        (page.props as unknown as { auth?: { user?: User } }).auth?.user,
+);
+const isAdmin = computed(() => authUser.value?.is_admin === true);
+const isSeller = computed(
+    () => authUser.value?.is_active_as_seller === true,
+);
 const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
 
 const activeItemStyles =
     'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Marketplace',
+            href: home(),
+            icon: House,
+        },
+        {
+            title: 'Products',
+            href: productsIndex(),
+            icon: ShoppingBag,
+        },
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+    ];
+
+    if (isSeller.value) {
+        items.push({
+            title: 'Seller',
+            href: sellerDashboard(),
+            icon: Store,
+        });
+    }
+
+    if (isAdmin.value) {
+        items.push({
+            title: 'Admin',
+            href: adminDashboard(),
+            icon: LayoutGrid,
+        });
+    }
+
+    return items;
+});
 
 const rightNavItems: NavItem[] = [
     {
