@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\PublicSettingController;
 use App\Http\Controllers\Api\V1\SellerActivationController;
 use App\Http\Controllers\Api\V1\SellerOrderController;
 use App\Http\Controllers\Api\V1\SellerProductController;
+use App\Http\Controllers\Api\V1\SellerSettingsController;
 use App\Http\Controllers\Api\V1\ShippingController;
 use Illuminate\Support\Facades\Route;
 
@@ -72,6 +73,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('orders/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
 
         Route::middleware('can:seller')->group(function (): void {
+            Route::get('seller/settings', [SellerSettingsController::class, 'show'])->name('seller.settings.show');
+            Route::put('seller/settings', [SellerSettingsController::class, 'update'])->name('seller.settings.update');
             Route::get('seller/orders', [SellerOrderController::class, 'index'])->name('seller.orders.index');
             Route::get('seller/orders/{orderNumber}', [SellerOrderController::class, 'show'])->name('seller.orders.show');
             // Products resolve by ID here (spec §11.3 `{id}`); the public

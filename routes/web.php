@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SellerDashboardController;
+use App\Http\Controllers\SellerSettingsController;
 use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\ProductIndexController;
@@ -19,9 +20,13 @@ Route::get('checkout/confirmation/{orderNumber}', [CheckoutController::class, 'c
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+    Route::redirect('seller', 'seller/dashboard')->name('seller.index');
     Route::get('seller/dashboard', SellerDashboardController::class)
         ->middleware('can:seller')
         ->name('seller.dashboard');
+    Route::get('seller/settings', SellerSettingsController::class)
+        ->middleware('can:seller')
+        ->name('seller.settings');
 });
 
 require __DIR__.'/settings.php';
