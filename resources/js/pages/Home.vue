@@ -26,7 +26,7 @@ function unwrap<T>(value: T[] | { data: T[] }): T[] {
 </script>
 
 <template>
-    <MarketplaceLayout>
+    <MarketplaceLayout show-hero>
         <QuickServices />
         <FlashSaleSection :products="unwrap(flashSaleProducts)" />
         <BestSellerSection :products="unwrap(bestSellerProducts)" />

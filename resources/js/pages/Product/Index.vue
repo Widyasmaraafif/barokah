@@ -80,7 +80,8 @@ function resetFilters(): void {
 <template>
     <Head title="Products" />
 
-    <div class="mx-auto w-full max-w-[1200px] px-4 py-6">
+    <MarketplaceLayout>
+        <div class="mx-auto w-full max-w-[1200px] px-4 py-6">
         <div class="flex flex-col gap-6 md:flex-row">
             <aside class="w-full shrink-0 md:w-[200px]">
                 <div class="rounded border p-4">
@@ -229,5 +230,6 @@ function resetFilters(): void {
                 </nav>
             </section>
         </div>
-    </div>
+        </div>
+        </MarketplaceLayout>
 </template>

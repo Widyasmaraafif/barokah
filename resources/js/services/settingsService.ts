@@ -9,6 +9,12 @@ export async function fetchPublicSettings(
         return cache;
     }
 
+    // Avoid an "ERR_INVALID_URL" crash during server-side rendering, where no
+    // browser window/origin exists to resolve the relative API path against.
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return {};
+    }
+
     const response = await fetch('/api/v1/settings/public', {
         headers: { Accept: 'application/json' },
     });

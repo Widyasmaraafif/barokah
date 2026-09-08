@@ -21,7 +21,7 @@ const props = withDefaults(
     defineProps<{
         showHero?: boolean;
     }>(),
-    { showHero: true },
+    { showHero: false },
 );
 
 const showDefaultNav = computed(() => !slots.mobileNav);

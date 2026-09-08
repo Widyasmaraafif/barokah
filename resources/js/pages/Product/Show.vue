@@ -22,7 +22,7 @@ type DetailProduct = {
     status: string;
     seller: { store_name: string; slug: string } | null;
     category: { name: string; slug: string } | null;
-    images: DetailImage[];
+    images: DetailImage[] | { data: DetailImage[] };
     primary_image: string | null;
 };
 
@@ -34,11 +34,11 @@ const activeImage = ref(props.product.primary_image);
 
 void loadSettings();
 
-const gallery = computed(() =>
-    props.product.images.length > 0
-        ? props.product.images
-        : [],
-);
+function unwrapImages(images: DetailProduct['images']): DetailImage[] {
+    return Array.isArray(images) ? images : (images?.data ?? []);
+}
+
+const gallery = computed(() => unwrapImages(props.product.images));
 
 const isOutOfStock = computed(() => props.product.stock <= 0);
 
@@ -50,7 +50,8 @@ function selectImage(url: string): void {
 <template>
     <Head :title="product.name" />
 
-    <div class="mx-auto w-full max-w-[1200px] px-4 py-6">
+    <MarketplaceLayout>
+        <div class="mx-auto w-full max-w-[1200px] px-4 py-6">
         <nav class="mb-4 text-xs text-muted-foreground">
             <Link href="/products" class="hover:underline">Products</Link>
             <span v-if="product.category"> / {{ product.category.name }}</span>
@@ -146,5 +147,6 @@ function selectImage(url: string): void {
                 </p>
             </div>
         </div>
-    </div>
+        </div>
+        </MarketplaceLayout>
 </template>

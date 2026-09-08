@@ -95,7 +95,7 @@ function searchKeyword(keyword: string): void {
                         v-for="keyword in keywords"
                         :key="keyword"
                         type="button"
-                        class="hover:underline"
+                        class="cursor-pointer hover:underline"
                         @click="searchKeyword(keyword)"
                     >
                         {{ keyword }}
