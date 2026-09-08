@@ -116,6 +116,30 @@ test('checkout rejects unknown buyer state', function () {
         ->assertJsonValidationErrors('buyer.state');
 });
 
+test('checkout accepts city belonging to state', function () {
+    $product = checkoutProduct();
+
+    $response = $this->postJson('/api/v1/orders', [
+        'product_id' => $product->id,
+        'quantity' => 1,
+        'buyer' => validBuyerPayload(['city' => 'Petaling Jaya']),
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.customer_city', 'Petaling Jaya');
+});
+
+test('checkout rejects city outside selected state', function () {
+    $product = checkoutProduct();
+
+    $this->postJson('/api/v1/orders', [
+        'product_id' => $product->id,
+        'quantity' => 1,
+        'buyer' => validBuyerPayload(['city' => 'Johor Bahru']),
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('buyer.city');
+});
+
 test('checkout rejects insufficient stock with 409 and keeps stock', function () {
     $product = checkoutProduct(['stock' => 1]);
 

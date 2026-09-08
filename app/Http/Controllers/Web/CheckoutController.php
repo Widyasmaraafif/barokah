@@ -87,6 +87,7 @@ class CheckoutController extends Controller
             'name' => $user?->name,
             'address' => $user?->address,
             'state' => $user?->state,
+            'city' => $user?->city,
             'post_code' => $user?->post_code,
             'phone' => $user?->phone,
             'email' => $user?->email,

@@ -23,6 +23,7 @@ class UserResource extends JsonResource
             'phone' => $this->phone,
             'address' => $this->address,
             'state' => $this->state,
+            'city' => $this->city,
             'post_code' => $this->post_code,
             'is_admin' => $this->isAdmin(),
             'is_active_as_seller' => (bool) $this->is_active_as_seller,

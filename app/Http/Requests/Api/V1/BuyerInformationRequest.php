@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Rules\CityInState;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -42,6 +43,7 @@ class BuyerInformationRequest extends FormRequest
             'buyer.name' => ['required', 'string', 'max:255'],
             'buyer.address' => ['required', 'string', 'max:500'],
             'buyer.state' => ['required', 'string', Rule::in(config('malaysia.states', []))],
+            'buyer.city' => ['nullable', 'string', 'max:100', new CityInState('buyer.state')],
             'buyer.post_code' => ['required', 'string', 'max:20'],
             'buyer.phone' => ['required', 'string', 'max:30'],
             'buyer.email' => ['nullable', 'email', 'max:255'],

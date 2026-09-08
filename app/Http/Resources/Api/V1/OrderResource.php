@@ -28,6 +28,7 @@ class OrderResource extends JsonResource
             'customer_name' => $this->customer_name,
             'customer_address' => $this->customer_address,
             'customer_state' => $this->customer_state,
+            'customer_city' => $this->customer_city,
             'customer_post_code' => $this->customer_post_code,
             'customer_phone' => $this->customer_phone,
             'customer_email' => $this->customer_email,

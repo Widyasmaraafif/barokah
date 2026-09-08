@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property string $customer_name
  * @property string $customer_address
  * @property string $customer_state
+ * @property string|null $customer_city
  * @property string $customer_post_code
  * @property string $customer_phone
  * @property string|null $customer_email
@@ -45,6 +46,7 @@ use Illuminate\Support\Carbon;
     'customer_name',
     'customer_address',
     'customer_state',
+    'customer_city',
     'customer_post_code',
     'customer_phone',
     'customer_email',

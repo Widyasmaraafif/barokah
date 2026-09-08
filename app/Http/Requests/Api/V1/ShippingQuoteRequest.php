@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Rules\CityInState;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,6 +30,7 @@ class ShippingQuoteRequest extends FormRequest
         return [
             'address' => ['required', 'string', 'max:500'],
             'state' => ['required', 'string', Rule::in(config('malaysia.states', []))],
+            'city' => ['nullable', 'string', 'max:100', new CityInState('state')],
             'post_code' => ['required', 'string', 'max:20'],
             'method' => ['nullable', 'string', Rule::in(['fixed', 'external'])],
             'subtotal' => ['nullable', 'numeric', 'min:0', 'max:100000000'],
