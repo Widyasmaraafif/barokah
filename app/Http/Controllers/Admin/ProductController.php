@@ -24,4 +24,11 @@ class ProductController extends Controller
             'product' => $product->load(['seller', 'category', 'images']),
         ]);
     }
+
+    public function edit(Product $product): Response
+    {
+        return Inertia::render('Admin/Products/Edit', [
+            'product' => $product->load(['seller', 'category', 'images']),
+        ]);
+    }
 }

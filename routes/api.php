@@ -59,7 +59,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
     // Session auth (Fortify web guard) is used for the Inertia SPA until the
     // Sanctum decision (spec §7.5/§12) is confirmed and the dependency added.
-    Route::middleware('auth')->group(function (): void {
+    // `web` starts the session here; without it `auth` never resolves the
+    // logged-in admin and every admin list renders "temporarily unavailable".
+    Route::middleware(['web', 'auth'])->group(function (): void {
         Route::get('me', [ProfileController::class, 'show'])->name('me.show');
         Route::put('me', [ProfileController::class, 'update'])->name('me.update');
         Route::put('me/password', [ProfileController::class, 'updatePassword'])->name('me.password');
@@ -81,6 +83,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::delete('seller/products/{product:id}', [SellerProductController::class, 'destroy'])->name('seller.products.destroy');
         });
 
+        // The Inertia SPA calls these routes with same-origin fetch using
+        // session auth (Fortify web guard); the outer `web` group already
+        // starts the session, so only the admin gate is needed here.
         Route::middleware('can:admin')->group(function (): void {
             Route::get('admin/orders', [AdminOrderController::class, 'index'])->name('admin.orders.index');
             Route::get('admin/orders/{orderNumber}', [AdminOrderController::class, 'show'])->name('admin.orders.show');

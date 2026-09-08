@@ -6,6 +6,7 @@ export type PaginatedResponse<T> = {
 
 export async function fetchAdminList<T>(url: string): Promise<T[]> {
     const response = await fetch(url, {
+        credentials: 'same-origin',
         headers: { Accept: 'application/json' },
     });
 

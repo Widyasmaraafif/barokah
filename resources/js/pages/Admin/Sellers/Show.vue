@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
-import { index } from '@/routes/admin/sellers';
+import { index, edit } from '@/routes/admin/sellers';
 
 type AdminSellerDetail = {
     id: number;
@@ -42,6 +42,16 @@ defineOptions({
             :title="seller.store_name"
             :description="`${seller.slug} · ${seller.status}`"
         />
+        <div>
+            <a
+                :href="edit(seller.id).url"
+                target="_blank"
+                rel="noopener"
+                class="text-sm hover:underline"
+            >
+                Edit in new tab
+            </a>
+        </div>
 
         <div
             class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"

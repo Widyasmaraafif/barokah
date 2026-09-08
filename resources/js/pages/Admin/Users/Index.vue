@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
-import { index, show } from '@/routes/admin/users';
+import { index, edit, show } from '@/routes/admin/users';
 import { fetchAdminList } from '../useAdminList';
 
 type AdminUser = {
@@ -79,10 +79,20 @@ onMounted(async () => {
                         </Link>
                         <p class="text-muted-foreground text-sm">{{ user.email }}</p>
                     </div>
-                    <p class="text-muted-foreground text-sm">
-                        {{ user.is_admin ? 'Admin' : 'Buyer' }}
-                        {{ user.is_active_as_seller ? '· Seller' : '' }}
-                    </p>
+                    <div class="flex items-center gap-3">
+                        <p class="text-muted-foreground text-sm">
+                            {{ user.is_admin ? 'Admin' : 'Buyer' }}
+                            {{ user.is_active_as_seller ? '· Seller' : '' }}
+                        </p>
+                        <a
+                            :href="edit(user.id).url"
+                            target="_blank"
+                            rel="noopener"
+                            class="text-sm font-medium hover:underline"
+                        >
+                            Edit
+                        </a>
+                    </div>
                 </li>
             </ul>
         </div>

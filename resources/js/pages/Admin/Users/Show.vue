@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
-import { index } from '@/routes/admin/users';
+import { index, edit } from '@/routes/admin/users';
 
 type AdminUserDetail = {
     id: number;
@@ -46,9 +46,19 @@ defineOptions({
         <div
             class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"
         >
-            <p class="text-sm">
-                Role: {{ user.is_admin ? 'Admin' : 'Buyer' }}
-            </p>
+            <div class="mb-3 flex items-center justify-between gap-2">
+                <p class="text-sm">
+                    Role: {{ user.is_admin ? 'Admin' : 'Buyer' }}
+                </p>
+                <a
+                    :href="edit(user.id).url"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-sm font-medium hover:underline"
+                >
+                    Edit in new tab
+                </a>
+            </div>
             <p class="text-muted-foreground mt-1 text-sm">
                 Seller activation:
                 {{ user.is_active_as_seller ? 'active' : 'inactive' }}

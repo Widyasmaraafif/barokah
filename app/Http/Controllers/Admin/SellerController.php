@@ -24,4 +24,11 @@ class SellerController extends Controller
             'seller' => $seller->load(['user', 'products']),
         ]);
     }
+
+    public function edit(Seller $seller): Response
+    {
+        return Inertia::render('Admin/Sellers/Edit', [
+            'seller' => $seller->load(['user', 'products']),
+        ]);
+    }
 }

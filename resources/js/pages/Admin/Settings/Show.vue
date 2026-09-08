@@ -66,6 +66,7 @@ async function save(): Promise<void> {
     try {
         const response = await fetch('/api/v1/admin/settings', {
             method: 'PUT',
+            credentials: 'same-origin',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',

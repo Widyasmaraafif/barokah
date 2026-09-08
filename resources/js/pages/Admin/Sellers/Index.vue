@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
-import { index, show } from '@/routes/admin/sellers';
+import { index, edit, show } from '@/routes/admin/sellers';
 import { fetchAdminList } from '../useAdminList';
 
 type AdminSeller = {
@@ -75,7 +75,17 @@ onMounted(async () => {
                     >
                         {{ seller.store_name }}
                     </Link>
-                    <p class="text-muted-foreground text-sm">{{ seller.status }}</p>
+                    <div class="flex items-center gap-3">
+                        <p class="text-muted-foreground text-sm">{{ seller.status }}</p>
+                        <a
+                            :href="edit(seller.id).url"
+                            target="_blank"
+                            rel="noopener"
+                            class="text-sm font-medium hover:underline"
+                        >
+                            Edit
+                        </a>
+                    </div>
                 </li>
             </ul>
         </div>

@@ -25,4 +25,11 @@ class UserController extends Controller
             'user' => $user->load('seller'),
         ]);
     }
+
+    public function edit(User $user): Response
+    {
+        return Inertia::render('Admin/Users/Edit', [
+            'user' => $user->load('seller'),
+        ]);
+    }
 }

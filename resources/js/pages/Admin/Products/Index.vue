@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
-import { index, show } from '@/routes/admin/products';
+import { index, edit, show } from '@/routes/admin/products';
 import { fetchAdminList } from '../useAdminList';
 
 type AdminProduct = {
@@ -84,7 +84,17 @@ onMounted(async () => {
                             Stock: {{ product.stock }}
                         </p>
                     </div>
-                    <p class="text-muted-foreground text-sm">{{ product.status }}</p>
+                    <div class="flex items-center gap-3">
+                        <p class="text-muted-foreground text-sm">{{ product.status }}</p>
+                        <a
+                            :href="edit(product.id).url"
+                            target="_blank"
+                            rel="noopener"
+                            class="text-sm font-medium hover:underline"
+                        >
+                            Edit
+                        </a>
+                    </div>
                 </li>
             </ul>
         </div>

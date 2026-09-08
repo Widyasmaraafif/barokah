@@ -18,15 +18,20 @@ Route::middleware(['auth', 'can:admin'])->prefix('admin')->name('admin.')->group
     Route::get('', DashboardController::class)->name('dashboard');
 
     Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
 
     Route::get('sellers', [SellerController::class, 'index'])->name('sellers.index');
+    Route::get('sellers/{seller}/edit', [SellerController::class, 'edit'])->name('sellers.edit');
     Route::get('sellers/{seller}', [SellerController::class, 'show'])->name('sellers.show');
 
     Route::get('products', [ProductController::class, 'index'])->name('products.index');
+    Route::get('products/{product:id}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::get('products/{product:id}', [ProductController::class, 'show'])->name('products.show');
 
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('categories/create', [CategoryController::class, 'create'])->name('categories.create');
+    Route::get('categories/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
 
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
