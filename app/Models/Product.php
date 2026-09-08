@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property string $price
  * @property int $stock
+ * @property int $weight_grams
  * @property ProductStatus $status
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -36,6 +37,7 @@ use Illuminate\Support\Carbon;
     'description',
     'price',
     'stock',
+    'weight_grams',
     'status',
 ])]
 class Product extends Model
@@ -52,6 +54,7 @@ class Product extends Model
     {
         return [
             'price' => 'decimal:2',
+            'weight_grams' => 'integer',
             'status' => ProductStatus::class,
         ];
     }

@@ -57,6 +57,7 @@ class SellerProductController extends Controller
                 'description' => $validated['description'] ?? null,
                 'price' => $validated['price'],
                 'stock' => $validated['stock'],
+                'weight_grams' => $validated['weight_grams'] ?? 0,
                 'status' => $validated['status'],
             ]);
 
