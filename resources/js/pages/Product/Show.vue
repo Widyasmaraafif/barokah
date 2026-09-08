@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
 import { useCheckoutStore } from '@/stores/checkout';
 import { useSettingsStore } from '@/stores/settings';
 

@@ -5,6 +5,7 @@ import { useCheckoutStore, type CheckoutStep } from '@/stores/checkout';
 import { useSettingsStore } from '@/stores/settings';
 import { getMalaysiaCities } from '@/composables/useMalaysiaCities';
 import malaysiaStates from '@/data/malaysia-states.json';
+import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
 
 const malaysiaStateOptions: string[] = (malaysiaStates as { name: string }[]).map(
     (stateOption) => stateOption.name,
