@@ -10,6 +10,14 @@ use App\Models\Setting;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+
+beforeEach(function () {
+    // Seeder downloads real photos; fake HTTP + storage for speed and offline tests.
+    Storage::fake('public');
+    Http::fake(['*' => Http::response(str_repeat('f', 2048), 200, ['Content-Type' => 'image/jpeg'])]);
+});
 
 test('database seeder seeds fixed demo accounts and catalog', function () {
     $this->seed(DatabaseSeeder::class);
@@ -30,19 +38,15 @@ test('database seeder seeds fixed demo accounts and catalog', function () {
     expect(Seller::query()->count())->toBe(3);
 
     expect(Category::query()->whereIn('slug', ['keripik', 'hijab', 'kerudung'])->count())->toBe(3);
-    expect(Product::query()->whereIn('slug', [
-        'keripik-pisang-original',
-        'keripik-singkong-balado',
-        'hijab-paris-premium',
-        'pashmina-kaos-basic',
-        'kerudung-bergo-maryam',
-        'kerudung-segi-empat-voal',
-    ])->count())->toBe(6);
+    expect(Product::query()->count())->toBe(45);
+    expect(Product::query()->where('category_id', Category::query()->where('slug', 'keripik')->firstOrFail()->id)->count())->toBe(15);
+    expect(Product::query()->where('category_id', Category::query()->where('slug', 'hijab')->firstOrFail()->id)->count())->toBe(15);
+    expect(Product::query()->where('category_id', Category::query()->where('slug', 'kerudung')->firstOrFail()->id)->count())->toBe(15);
 
     $product = Product::query()->where('slug', 'keripik-pisang-original')->firstOrFail();
-    expect($product->images)->toHaveCount(1);
+    expect($product->images)->toHaveCount(3);
     expect($product->images->firstWhere('is_primary', true))->not->toBeNull();
-    expect(ProductImage::query()->count())->toBe(6);
+    expect(ProductImage::query()->count())->toBe(135);
 
     expect(Setting::query()->count())->toBeGreaterThan(0);
 });
@@ -77,7 +81,7 @@ test('database seeder is safe to run twice', function () {
 
     expect(User::query()->count())->toBe(5);
     expect(Category::query()->count())->toBe(3);
-    expect(Product::query()->count())->toBe(6);
+    expect(Product::query()->count())->toBe(45);
     expect(Order::query()->count())->toBe(3);
     expect(Payment::query()->count())->toBe(3);
 });
