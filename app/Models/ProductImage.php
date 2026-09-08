@@ -35,6 +35,11 @@ class ProductImage extends Model
     use HasFactory;
 
     /**
+     * @var list<string>
+     */
+    protected $appends = ['url'];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

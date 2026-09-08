@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Enums\ProductStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\UpdateProductRequest;
 use App\Http\Resources\Api\V1\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -56,31 +61,91 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Moderate a product: status and category assignment.
+     * Update any product: all fields + image management.
+     *
+     * Follows the same image handling pattern as SellerProductController
+     * so admins can fully manage any product.
      */
-    public function update(Request $request, Product $product): ProductResource
+    public function update(UpdateProductRequest $request, Product $product): ProductResource
     {
-        Gate::authorize('update', $product);
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            'status' => ['sometimes', 'required', Rule::enum(ProductStatus::class)],
-            'category_id' => ['sometimes', 'required', 'integer', Rule::exists('categories', 'id')],
-        ]);
+        $product = DB::transaction(function () use ($request, $product, $validated) {
+            if (array_key_exists('name', $validated)) {
+                $product->slug = $this->uniqueSlug($validated['name'], $product->id);
+            }
 
-        $product->fill($validated)->save();
+            $product->fill($validated);
+            $product->save();
 
-        return new ProductResource($product->refresh()->load(['seller', 'category', 'images']));
+            if (! empty($validated['remove_image_ids'])) {
+                $images = $product->images()->whereIn('id', $validated['remove_image_ids'])->get();
+
+                foreach ($images as $image) {
+                    Storage::disk('public')->delete($image->path);
+                    $image->delete();
+                }
+            }
+
+            $this->storeImages($product->refresh(), $request->file('images', []));
+
+            return $product->load(['seller', 'category', 'images']);
+        });
+
+        return new ProductResource($product);
     }
 
     /**
-     * Remove any product (cascades images via model events).
+     * Remove any product and its image files.
      */
     public function destroy(Product $product): Response
     {
         Gate::authorize('delete', $product);
 
-        $product->delete();
+        DB::transaction(function () use ($product): void {
+            foreach ($product->images as $image) {
+                Storage::disk('public')->delete($image->path);
+            }
+
+            $product->delete();
+        });
 
         return response()->noContent();
+    }
+
+    protected function uniqueSlug(string $value, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($value);
+        $slug = $base === '' ? Str::random(8) : $base;
+        $candidate = $slug;
+        $counter = 2;
+
+        while (Product::query()->where('slug', $candidate)->when($ignoreId !== null, fn ($query) => $query->where('id', '!=', $ignoreId))->exists()) {
+            $candidate = $slug.'-'.$counter;
+            $counter++;
+        }
+
+        return $candidate;
+    }
+
+    /**
+     * @param  array<int, UploadedFile>  $files
+     */
+    protected function storeImages(Product $product, array $files): void
+    {
+        if ($files === []) {
+            return;
+        }
+
+        $startOrder = (int) $product->images()->max('sort_order') + 1;
+        $hasPrimary = $product->images()->where('is_primary', true)->exists();
+
+        foreach (array_values($files) as $index => $file) {
+            $product->images()->create([
+                'path' => $file->store('products', 'public'),
+                'sort_order' => $startOrder + $index,
+                'is_primary' => ! $hasPrimary && $index === 0,
+            ]);
+        }
     }
 }

@@ -37,6 +37,7 @@ class StoreProductRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:10000'],
             'price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
             'stock' => ['required', 'integer', 'min:0', 'max:1000000'],
+            'weight_grams' => ['required', 'integer', 'min:0', 'max:1000000'],
             'status' => ['required', Rule::enum(ProductStatus::class)],
             'images' => ['nullable', 'array', 'max:5'],
             'images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],

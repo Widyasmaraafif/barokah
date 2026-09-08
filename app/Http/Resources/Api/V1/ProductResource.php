@@ -23,6 +23,7 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'price' => $this->price,
             'stock' => $this->stock,
+            'weight_grams' => $this->weight_grams,
             'status' => $this->status instanceof \BackedEnum ? $this->status->value : $this->status,
             'seller' => new SellerResource($this->whenLoaded('seller')),
             'category' => new CategoryResource($this->whenLoaded('category')),
