@@ -4,6 +4,7 @@ import { reactive, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { index, show } from '@/routes/admin/sellers';
 
@@ -33,6 +34,9 @@ defineOptions({
 const statuses = ['active', 'pending', 'suspended'];
 
 const form = reactive({
+    store_name: props.seller.store_name,
+    slug: props.seller.slug,
+    description: props.seller.description ?? '',
     status: props.seller.status ?? 'pending',
 });
 
@@ -64,7 +68,16 @@ async function save(): Promise<void> {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': csrfToken(),
                 },
-                body: JSON.stringify({ status: form.status }),
+                body: JSON.stringify({
+                    store_name: form.store_name,
+                    slug:
+                        form.slug.trim() === '' ? null : form.slug.trim(),
+                    description:
+                        form.description.trim() === ''
+                            ? null
+                            : form.description,
+                    status: form.status,
+                }),
             },
         );
 
@@ -111,13 +124,44 @@ async function save(): Promise<void> {
         <div
             class="border-sidebar-border/70 dark:border-sidebar-border max-w-2xl rounded-xl border p-4"
         >
-            <p class="text-muted-foreground mb-4 text-sm">
-                {{ seller.description ?? 'No description.' }}
-            </p>
-
             <p v-if="notice" class="mb-4 text-sm text-amber-600">{{ notice }}</p>
 
             <form class="space-y-5" @submit.prevent="save">
+                <div class="grid gap-2">
+                    <Label for="store_name">Store name</Label>
+                    <Input
+                        id="store_name"
+                        v-model="form.store_name"
+                        type="text"
+                    />
+                    <InputError :message="errors.store_name" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="slug">Slug (optional)</Label>
+                    <Input
+                        id="slug"
+                        v-model="form.slug"
+                        type="text"
+                        placeholder="auto-generated"
+                    />
+                    <p class="text-muted-foreground text-xs">
+                        Leave blank to auto-generate from the store name.
+                    </p>
+                    <InputError :message="errors.slug" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="description">Description</Label>
+                    <textarea
+                        id="description"
+                        v-model="form.description"
+                        rows="4"
+                        class="border-input min-h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+                    />
+                    <InputError :message="errors.description" />
+                </div>
+
                 <div class="grid gap-2">
                     <Label for="status">Status</Label>
                     <select
