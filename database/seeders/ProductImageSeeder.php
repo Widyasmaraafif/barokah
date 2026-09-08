@@ -9,16 +9,21 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Demo product galleries: each product gets 3 real JPEG files stored
- * on the public disk under products/.
+ * Demo product galleries: each product gets 3 real images stored on the
+ * public disk under products/.
  *
- * Source priority per image:
- * 1. LoremFlickr keyword photo (topical: chips/snack, hijab/scarf).
- * 2. Picsum seeded photo (deterministic real photo fallback).
- * 3. Local GD placeholder (offline fallback, always works).
+ * Image sources, in priority order:
+ * 1. Local gallery folders committed at storage/app/public/products/
+ *    (e.g. products/hijab for the hijab category). A few images are picked
+ *    from the matching folder for each product, so the catalog feels real
+ *    without hitting the network. "Hijab" and "keripik" ship with files;
+ *    other categories fall through to the download/placeholder paths.
+ * 2. LoremFlickr keyword photo (topical: chips/snack, hijab/scarf).
+ * 3. Picsum seeded photo (deterministic real photo fallback).
+ * 4. Local GD placeholder (offline fallback, always works).
  *
- * Idempotent: matched by product_id + path, safe to re-run. Files
- * are only downloaded when missing from the disk.
+ * Idempotent: matched by product_id + path, safe to re-run. Files are
+ * only copied/downloaded when the product image is missing on the disk.
  */
 class ProductImageSeeder extends Seeder
 {
@@ -27,6 +32,20 @@ class ProductImageSeeder extends Seeder
     private const WIDTH = 800;
 
     private const HEIGHT = 800;
+
+    /**
+     * Map a category slug to the committed local gallery folder name.
+     *
+     * @return array<string, string>
+     */
+    protected function categoryFolders(): array
+    {
+        return [
+            'hijab' => 'hijab',
+            'kerudung' => 'hijab',
+            'keripik' => 'keripik',
+        ];
+    }
 
     /**
      * @return array<string, string>
@@ -49,13 +68,22 @@ class ProductImageSeeder extends Seeder
 
         foreach (Product::query()->with('category')->orderBy('id')->get() as $product) {
             $keyword = $this->keywords()[$product->category?->slug ?? ''] ?? 'product';
+            $folder = $this->categoryFolders()[$product->category?->slug ?? ''] ?? null;
+            $localFiles = $folder === null
+                ? []
+                : $this->localGalleryFiles($folder);
 
             for ($index = 0; $index < self::IMAGES_PER_PRODUCT; $index++) {
                 $sortOrder = $index;
                 $path = "products/{$product->slug}-".($index + 1).'.jpg';
 
                 if (! $disk->exists($path)) {
-                    $disk->put($path, $this->fetchImage($product->slug, $keyword, $index + 1, $product->name));
+                    if ($localFiles !== []) {
+                        $source = $this->pickLocalFile($localFiles, $product->id, $index);
+                        $disk->put($path, $disk->get($source));
+                    } else {
+                        $disk->put($path, $this->fetchImage($product->slug, $keyword, $index + 1, $product->name));
+                    }
                 }
 
                 ProductImage::query()->updateOrCreate(
@@ -67,6 +95,33 @@ class ProductImageSeeder extends Seeder
                 );
             }
         }
+    }
+
+    /**
+     * List the local gallery images available for a folder. Returns full
+     * relative paths (e.g. "products/hijab/xxx.webp").
+     *
+     * @return list<string>
+     */
+    protected function localGalleryFiles(string $folder): array
+    {
+        $files = Storage::disk('public')->files("products/{$folder}");
+
+        return array_values(array_filter($files, fn (string $file): bool => str_ends_with(strtolower($file), '.jpg') || str_ends_with(strtolower($file), '.jpeg') || str_ends_with(strtolower($file), '.webp') || str_ends_with(strtolower($file), '.png')));
+    }
+
+    /**
+     * Pick a local file for a product shot. Uses a deterministic rotation
+     * (shuffle once per product via an offset) so re-seeding stays stable,
+     * while still spreading different images across products.
+     *
+     * @param  list<string>  $files
+     */
+    protected function pickLocalFile(array $files, int $productId, int $index): string
+    {
+        $offset = ($productId + $index) % count($files);
+
+        return $files[$offset];
     }
 
     /**
