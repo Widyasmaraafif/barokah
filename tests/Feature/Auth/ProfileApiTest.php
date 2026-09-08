@@ -76,6 +76,30 @@ test('profile update rejects unknown state', function () {
         ->assertJsonValidationErrors('state');
 });
 
+test('profile update accepts city belonging to state', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->putJson('/api/v1/me', [
+        'name' => $user->name,
+        'email' => $user->email,
+        'state' => 'Johor',
+        'city' => 'Johor Bahru',
+    ])->assertOk()
+        ->assertJsonPath('data.city', 'Johor Bahru');
+});
+
+test('profile update rejects city outside state', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->putJson('/api/v1/me', [
+        'name' => $user->name,
+        'email' => $user->email,
+        'state' => 'Johor',
+        'city' => 'Shah Alam',
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('city');
+});
+
 test('authenticated buyer can change password with current password', function () {
     $user = User::factory()->create();
 

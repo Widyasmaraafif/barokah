@@ -45,11 +45,10 @@ defineOptions({
         <div>
             <a
                 :href="edit(seller.id).url"
-                target="_blank"
                 rel="noopener"
                 class="text-sm hover:underline"
             >
-                Edit in new tab
+                Edit
             </a>
         </div>
 

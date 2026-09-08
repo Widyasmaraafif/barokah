@@ -6,6 +6,7 @@ use App\Concerns\ProfileValidationRules;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Rules\CityInState;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
@@ -61,6 +62,7 @@ class AdminUserController extends Controller
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
             'address' => ['sometimes', 'nullable', 'string', 'max:500'],
             'state' => ['sometimes', 'nullable', 'string', Rule::in(config('malaysia.states', []))],
+            'city' => ['sometimes', 'nullable', 'string', 'max:100', new CityInState('state')],
             'post_code' => ['sometimes', 'nullable', 'string', 'max:20'],
             'is_admin' => ['sometimes', 'required', 'boolean'],
             'is_active_as_seller' => ['sometimes', 'required', 'boolean'],

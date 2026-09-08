@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getMalaysiaCities } from '@/composables/useMalaysiaCities';
 import { index, show } from '@/routes/admin/users';
 import malaysiaStates from '@/data/malaysia-states.json';
 
@@ -16,6 +17,7 @@ type AdminUserDetail = {
     phone?: string | null;
     address?: string | null;
     state?: string | null;
+    city?: string | null;
     post_code?: string | null;
     is_admin: boolean;
     is_active_as_seller: boolean;
@@ -46,10 +48,24 @@ const form = reactive({
     phone: props.user.phone ?? '',
     address: props.user.address ?? '',
     state: props.user.state ?? '',
+    city: props.user.city ?? '',
     post_code: props.user.post_code ?? '',
     is_admin: props.user.is_admin,
     is_active_as_seller: props.user.is_active_as_seller,
 });
+
+const cityOptions = computed(() =>
+    form.state === '' ? [] : getMalaysiaCities(form.state),
+);
+
+watch(
+    () => form.state,
+    (nextState, prevState) => {
+        if (nextState !== prevState) {
+            form.city = '';
+        }
+    },
+);
 
 const errors = ref<Record<string, string>>({});
 const isSaving = ref(false);
@@ -83,6 +99,7 @@ async function save(): Promise<void> {
                 phone: form.phone.trim() === '' ? null : form.phone,
                 address: form.address.trim() === '' ? null : form.address,
                 state: form.state === '' ? null : form.state,
+                city: form.city === '' ? null : form.city,
                 post_code: form.post_code.trim() === '' ? null : form.post_code,
                 is_admin: form.is_admin,
                 is_active_as_seller: form.is_active_as_seller,
@@ -179,6 +196,34 @@ async function save(): Promise<void> {
                 </div>
 
                 <div class="grid gap-2">
+                    <Label for="city">City</Label>
+                    <select
+                        id="city"
+                        v-model="form.city"
+                        :disabled="form.state === '' || cityOptions.length === 0"
+                        class="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm disabled:opacity-50"
+                    >
+                        <option value="">
+                            {{
+                                form.state === ''
+                                    ? 'Select state first'
+                                    : cityOptions.length === 0
+                                      ? 'No cities available'
+                                      : 'No city'
+                            }}
+                        </option>
+                        <option
+                            v-for="cityOption in cityOptions"
+                            :key="cityOption"
+                            :value="cityOption"
+                        >
+                            {{ cityOption }}
+                        </option>
+                    </select>
+                    <InputError :message="errors.city" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="post_code">Post code</Label>
                     <Input id="post_code" v-model="form.post_code" type="text" />
                     <InputError :message="errors.post_code" />
@@ -220,11 +265,10 @@ async function save(): Promise<void> {
                     </Button>
                     <a
                         :href="show(user.id).url"
-                        target="_blank"
                         rel="noopener"
                         class="text-muted-foreground text-sm hover:underline"
                     >
-                        View detail in new tab
+                        View detail
                     </a>
                 </div>
             </form>

@@ -4,6 +4,7 @@ export type BuyerInformation = {
     name: string;
     address: string;
     state: string;
+    city: string;
     post_code: string;
     phone: string;
     email: string;
@@ -29,6 +30,7 @@ const state = reactive<CheckoutState>({
         name: '',
         address: '',
         state: '',
+        city: '',
         post_code: '',
         phone: '',
         email: '',
@@ -65,6 +67,7 @@ export function useCheckoutStore() {
             name: '',
             address: '',
             state: '',
+            city: '',
             post_code: '',
             phone: '',
             email: '',

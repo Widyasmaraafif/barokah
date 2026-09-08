@@ -88,6 +88,7 @@ class CheckoutController extends Controller
                 'customer_name' => $validated['buyer']['name'],
                 'customer_address' => $validated['buyer']['address'],
                 'customer_state' => $validated['buyer']['state'],
+                'customer_city' => $validated['buyer']['city'] ?? null,
                 'customer_post_code' => $validated['buyer']['post_code'],
                 'customer_phone' => $validated['buyer']['phone'],
                 'customer_email' => $validated['buyer']['email'] ?? null,

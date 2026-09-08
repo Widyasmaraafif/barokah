@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useCheckoutStore, type CheckoutStep } from '@/stores/checkout';
 import { useSettingsStore } from '@/stores/settings';
+import { getMalaysiaCities } from '@/composables/useMalaysiaCities';
 import malaysiaStates from '@/data/malaysia-states.json';
 
 const malaysiaStateOptions: string[] = (malaysiaStates as { name: string }[]).map(
@@ -38,10 +39,24 @@ const buyer = reactive({
     name: state.buyer.name || props.profile.name || '',
     address: state.buyer.address || props.profile.address || '',
     state: state.buyer.state || props.profile.state || '',
+    city: state.buyer.city || props.profile.city || '',
     post_code: state.buyer.post_code || props.profile.post_code || '',
     phone: state.buyer.phone || props.profile.phone || '',
     email: state.buyer.email || props.profile.email || '',
 });
+
+const cityOptions = computed(() =>
+    buyer.state === '' ? [] : getMalaysiaCities(buyer.state),
+);
+
+watch(
+    () => buyer.state,
+    (nextState, prevState) => {
+        if (nextState !== prevState) {
+            buyer.city = '';
+        }
+    },
+);
 
 const quantity = ref(state.quantity || 1);
 const shippingMethod = ref(state.shippingMethod || 'fixed');
@@ -148,6 +163,7 @@ async function placeOrder(): Promise<void> {
                     name: buyer.name,
                     address: buyer.address,
                     state: buyer.state,
+                    city: buyer.city === '' ? undefined : buyer.city,
                     post_code: buyer.post_code,
                     phone: buyer.phone,
                     email: buyer.email || undefined,
@@ -327,6 +343,35 @@ function stopPolling(): void {
                                 </select>
                                 <p v-if="fieldErrors.state" class="mt-1 text-xs text-red-600">
                                     {{ fieldErrors.state }}
+                                </p>
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm" for="buyer-city">City</label>
+                                <select
+                                    id="buyer-city"
+                                    v-model="buyer.city"
+                                    :disabled="buyer.state === '' || cityOptions.length === 0"
+                                    class="h-10 w-full rounded border bg-white px-3 text-sm disabled:opacity-50"
+                                >
+                                    <option value="" disabled>
+                                        {{
+                                            buyer.state === ''
+                                                ? 'Select state first'
+                                                : cityOptions.length === 0
+                                                  ? 'No cities available'
+                                                  : 'Select city'
+                                        }}
+                                    </option>
+                                    <option
+                                        v-for="cityOption in cityOptions"
+                                        :key="cityOption"
+                                        :value="cityOption"
+                                    >
+                                        {{ cityOption }}
+                                    </option>
+                                </select>
+                                <p v-if="fieldErrors.city" class="mt-1 text-xs text-red-600">
+                                    {{ fieldErrors.city }}
                                 </p>
                             </div>
                             <div>

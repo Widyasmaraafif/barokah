@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1;
 
 use App\Concerns\ProfileValidationRules;
+use App\Rules\CityInState;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -31,6 +32,7 @@ class UpdateProfileRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:30'],
             'address' => ['nullable', 'string', 'max:500'],
             'state' => ['nullable', 'string', Rule::in(config('malaysia.states', []))],
+            'city' => ['nullable', 'string', 'max:100', new CityInState('state')],
             'post_code' => ['nullable', 'string', 'max:20'],
         ]);
     }

@@ -18,6 +18,7 @@ type AdminUserDetail = {
     phone?: string | null;
     address?: string | null;
     state?: string | null;
+    city?: string | null;
     post_code?: string | null;
     email_verified_at?: string | null;
     is_admin: boolean;
@@ -77,11 +78,10 @@ defineOptions({
                 </div>
                 <a
                     :href="edit(user.id).url"
-                    target="_blank"
                     rel="noopener"
                     class="text-sm font-medium hover:underline"
                 >
-                    Edit in new tab
+                    Edit
                 </a>
             </div>
 
@@ -144,6 +144,14 @@ defineOptions({
                             State
                         </th>
                         <td class="px-3 py-2">{{ user.state ?? '-' }}</td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-40 px-3 py-2 align-top font-medium"
+                        >
+                            City
+                        </th>
+                        <td class="px-3 py-2">{{ user.city ?? '-' }}</td>
                     </tr>
                     <tr class="border-b last:border-0">
                         <th

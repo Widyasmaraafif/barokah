@@ -28,12 +28,13 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $phone
  * @property string|null $address
  * @property string|null $state
+ * @property string|null $city
  * @property string|null $post_code
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'phone', 'address', 'state', 'post_code'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'address', 'state', 'city', 'post_code'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {

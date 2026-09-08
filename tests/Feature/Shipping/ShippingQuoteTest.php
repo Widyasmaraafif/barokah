@@ -145,3 +145,14 @@ test('quote rejects unknown state', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors('state');
 });
+
+test('quote accepts city belonging to state', function () {
+    $this->postJson('/api/v1/shipping/quote', shippingTestAddress(['city' => 'Shah Alam']))
+        ->assertOk();
+});
+
+test('quote rejects city outside state', function () {
+    $this->postJson('/api/v1/shipping/quote', shippingTestAddress(['city' => 'Johor Bahru']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('city');
+});

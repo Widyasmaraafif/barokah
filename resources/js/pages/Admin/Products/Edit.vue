@@ -236,11 +236,10 @@ async function removeProduct(): Promise<void> {
                     </Button>
                     <a
                         :href="show(product.id).url"
-                        target="_blank"
                         rel="noopener"
                         class="text-muted-foreground text-sm hover:underline"
                     >
-                        View detail in new tab
+                        View detail
                     </a>
                 </div>
             </form>

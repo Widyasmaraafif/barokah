@@ -108,7 +108,6 @@ onMounted(async () => {
                                 >
                                     <a
                                         :href="edit(category.id).url"
-                                        target="_blank"
                                         rel="noopener"
                                         class="text-sm font-medium hover:underline"
                                     >

@@ -62,6 +62,28 @@ test('admin user update rejects unknown state and duplicate email', function () 
         ->assertJsonValidationErrors('email');
 });
 
+test('admin can update user city belonging to state', function () {
+    $admin = adminEditor();
+    $user = User::factory()->create();
+
+    $this->actingAs($admin)->putJson("/api/v1/admin/users/{$user->id}", [
+        'state' => 'Selangor',
+        'city' => 'Shah Alam',
+    ])->assertOk()
+        ->assertJsonPath('data.city', 'Shah Alam');
+});
+
+test('admin user update rejects city outside state', function () {
+    $admin = adminEditor();
+    $user = User::factory()->create();
+
+    $this->actingAs($admin)->putJson("/api/v1/admin/users/{$user->id}", [
+        'state' => 'Selangor',
+        'city' => 'Johor Bahru',
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('city');
+});
+
 test('buyers cannot update users', function () {
     $buyer = User::factory()->create();
     $user = User::factory()->create();
