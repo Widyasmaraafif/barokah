@@ -43,6 +43,17 @@ export type HomeProductItem = {
     primary_image: string | null;
 };
 
+export type HomeSellerItem = {
+    id: number;
+    store_name: string;
+    slug: string;
+    description: string | null;
+    profile_photo_url: string | null;
+    city: string | null;
+    state: string | null;
+    status: string;
+};
+
 export type HomeCategoryItem = {
     id: number;
     name: string;
