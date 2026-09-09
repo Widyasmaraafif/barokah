@@ -41,6 +41,9 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::post('orders/{orderNumber}/payments', [PaymentController::class, 'store'])
         ->middleware('throttle:30,1')
         ->name('orders.payments.store');
+    Route::post('orders/{orderNumber}/payment/proof', [PaymentController::class, 'proof'])
+        ->middleware('throttle:30,1')
+        ->name('orders.payments.proof');
     Route::get('orders/{orderNumber}/payment', [PaymentController::class, 'show'])
         ->middleware('throttle:60,1')
         ->name('orders.payment.show');
@@ -117,6 +120,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
             Route::get('admin/payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
             Route::get('admin/payments/{payment}', [AdminPaymentController::class, 'show'])->name('admin.payments.show');
+            Route::post('admin/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('admin.payments.verify');
 
             Route::apiResource('admin/shipping-rates', AdminShippingRateController::class)
                 ->except(['show'])

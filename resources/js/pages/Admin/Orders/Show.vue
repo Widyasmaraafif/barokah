@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import { index } from '@/routes/admin/orders';
@@ -17,11 +17,14 @@ type AdminOrderDetailItem = {
 };
 
 type AdminOrderDetailPayment = {
+    id: number;
     payment_method: string;
     payment_gateway: string;
     status: string;
     amount: string | number;
     transaction_id?: string | null;
+    proof_url?: string | null;
+    proof_uploaded_at?: string | null;
     paid_at?: string | null;
 } | null;
 
@@ -37,6 +40,10 @@ type AdminOrderDetail = {
     customer_post_code: string;
     customer_phone: string;
     customer_email?: string | null;
+    shipping_address?: string | null;
+    shipping_state?: string | null;
+    shipping_city?: string | null;
+    shipping_post_code?: string | null;
     subtotal: string | number;
     shipping_fee: string | number;
     total: string | number;
@@ -87,6 +94,70 @@ const customerLocation = computed(() => {
 
     return parts.length > 0 ? parts.join(', ') : '-';
 });
+
+const shippingLocation = computed(() => {
+    const parts = [
+        props.order.shipping_city,
+        props.order.shipping_state,
+        props.order.shipping_post_code,
+    ].filter(
+        (part): part is string => typeof part === 'string' && part !== '',
+    );
+
+    return parts.length > 0 ? parts.join(', ') : '-';
+});
+
+const isManualPayment = computed(
+    () =>
+        props.order.payment?.payment_method === 'bank_transfer' ||
+        props.order.payment?.payment_method === 'qr_code' ||
+        props.order.payment?.payment_gateway === 'manual',
+);
+const isPaymentPending = computed(
+    () => props.order.payment?.status === 'pending',
+);
+const isVerifying = ref(false);
+const verifyError = ref<string | null>(null);
+
+async function verify(status: 'paid' | 'failed'): Promise<void> {
+    if (!props.order.payment) {
+        return;
+    }
+    isVerifying.value = true;
+    verifyError.value = null;
+    try {
+        const response = await fetch(
+            `/api/v1/admin/payments/${props.order.payment.id}/verify`,
+            {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN':
+                        (
+                            document.querySelector(
+                                'meta[name="csrf-token"]',
+                            ) as HTMLMetaElement | null
+                        )?.content ?? '',
+                },
+                body: JSON.stringify({ status }),
+            },
+        );
+        if (!response.ok) {
+            const payload = (await response
+                .json()
+                .catch(() => null)) as { message?: string } | null;
+            verifyError.value = payload?.message ?? 'Verification failed.';
+            return;
+        }
+        router.reload();
+    } catch {
+        verifyError.value = 'Verification failed. Please try again.';
+    } finally {
+        isVerifying.value = false;
+    }
+}
 </script>
 
 <template>
@@ -112,6 +183,13 @@ const customerLocation = computed(() => {
                 {{ order.payment.status }}
             </Badge>
             <Badge v-else variant="outline">No payment yet</Badge>
+            <Badge
+                v-if="isManualPayment && isPaymentPending"
+                variant="outline"
+                class="border-amber-300 text-amber-700"
+            >
+                Manual · waiting verification
+            </Badge>
         </div>
 
         <div
@@ -220,7 +298,7 @@ const customerLocation = computed(() => {
             <div
                 class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"
             >
-                <h3 class="mb-3 text-base font-medium">Customer</h3>
+                <h3 class="mb-3 text-base font-medium">Billing customer</h3>
                 <table class="w-full text-left text-sm">
                     <tbody>
                         <tr class="border-b last:border-0">
@@ -288,20 +366,21 @@ const customerLocation = computed(() => {
             <div
                 class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"
             >
-                <h3 class="mb-3 text-base font-medium">Payment & shipping</h3>
+                <h3 class="mb-3 text-base font-medium">Delivery address</h3>
                 <table class="w-full text-left text-sm">
                     <tbody>
                         <tr class="border-b last:border-0">
                             <th
                                 class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
                             >
-                                Method
+                                Address
                             </th>
                             <td class="px-3 py-2">
                                 {{
-                                    order.payment
-                                        ? order.payment.payment_method
-                                        : '-'
+                                    displayText(order.shipping_address) ===
+                                    '-'
+                                        ? 'Same as billing'
+                                        : order.shipping_address
                                 }}
                             </td>
                         </tr>
@@ -309,68 +388,10 @@ const customerLocation = computed(() => {
                             <th
                                 class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
                             >
-                                Gateway
+                                City / State
                             </th>
                             <td class="px-3 py-2">
-                                {{
-                                    order.payment
-                                        ? order.payment.payment_gateway
-                                        : '-'
-                                }}
-                            </td>
-                        </tr>
-                        <tr class="border-b last:border-0">
-                            <th
-                                class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
-                            >
-                                Pay status
-                            </th>
-                            <td class="px-3 py-2">
-                                {{
-                                    order.payment
-                                        ? order.payment.status
-                                        : 'No payment yet'
-                                }}
-                            </td>
-                        </tr>
-                        <tr class="border-b last:border-0">
-                            <th
-                                class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
-                            >
-                                Amount
-                            </th>
-                            <td class="px-3 py-2">
-                                {{
-                                    order.payment
-                                        ? displayMoney(order.payment.amount)
-                                        : '-'
-                                }}
-                            </td>
-                        </tr>
-                        <tr class="border-b last:border-0">
-                            <th
-                                class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
-                            >
-                                Transaction
-                            </th>
-                            <td class="px-3 py-2">
-                                {{
-                                    displayText(
-                                        order.payment?.transaction_id,
-                                    )
-                                }}
-                            </td>
-                        </tr>
-                        <tr class="border-b last:border-0">
-                            <th
-                                class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
-                            >
-                                Paid at
-                            </th>
-                            <td class="px-3 py-2">
-                                {{
-                                    displayText(order.payment?.paid_at)
-                                }}
+                                {{ shippingLocation }}
                             </td>
                         </tr>
                         <tr class="border-b last:border-0">
@@ -401,6 +422,164 @@ const customerLocation = computed(() => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <div
+            class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"
+        >
+            <h3 class="mb-3 text-base font-medium">Payment & verification</h3>
+            <table class="w-full text-left text-sm">
+                <tbody>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
+                        >
+                            Method
+                        </th>
+                        <td class="px-3 py-2">
+                            {{
+                                order.payment
+                                    ? order.payment.payment_method
+                                    : '-'
+                            }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
+                        >
+                            Gateway
+                        </th>
+                        <td class="px-3 py-2">
+                            {{
+                                order.payment
+                                    ? order.payment.payment_gateway
+                                    : '-'
+                            }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
+                        >
+                            Pay status
+                        </th>
+                        <td class="px-3 py-2">
+                            {{
+                                order.payment
+                                    ? order.payment.status
+                                    : 'No payment yet'
+                            }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
+                        >
+                            Amount
+                        </th>
+                        <td class="px-3 py-2">
+                            {{
+                                order.payment
+                                    ? displayMoney(order.payment.amount)
+                                    : '-'
+                            }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
+                        >
+                            Transaction
+                        </th>
+                        <td class="px-3 py-2">
+                            {{
+                                displayText(
+                                    order.payment?.transaction_id,
+                                )
+                            }}
+                        </td>
+                    </tr>
+                    <tr class="border-b last:border-0">
+                        <th
+                            class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
+                        >
+                            Paid at
+                        </th>
+                        <td class="px-3 py-2">
+                            {{
+                                displayText(order.payment?.paid_at)
+                            }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div v-if="isManualPayment" class="mt-4 border-t pt-4">
+                <h4 class="text-sm font-semibold">Payment receipt</h4>
+                <div
+                    v-if="order.payment?.proof_url"
+                    class="mt-2 flex flex-wrap items-start gap-3"
+                >
+                    <a
+                        :href="order.payment.proof_url"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        <img
+                            :src="order.payment.proof_url"
+                            alt="Payment receipt"
+                            class="h-32 w-32 rounded border bg-white object-cover"
+                        />
+                    </a>
+                    <div class="text-xs text-muted-foreground">
+                        <p>
+                            Uploaded
+                            {{
+                                displayText(
+                                    order.payment.proof_uploaded_at,
+                                )
+                            }}
+                        </p>
+                        <a
+                            :href="order.payment.proof_url"
+                            target="_blank"
+                            rel="noopener"
+                            class="underline"
+                        >
+                            View full image
+                        </a>
+                    </div>
+                </div>
+                <p v-else class="mt-2 text-sm text-muted-foreground">
+                    No receipt uploaded yet.
+                </p>
+
+                <div
+                    v-if="isManualPayment && isPaymentPending"
+                    class="mt-3 flex flex-wrap gap-2"
+                >
+                    <button
+                        type="button"
+                        :disabled="isVerifying"
+                        class="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        @click="verify('paid')"
+                    >
+                        {{ isVerifying ? 'Verifying…' : 'Mark paid' }}
+                    </button>
+                    <button
+                        type="button"
+                        :disabled="isVerifying"
+                        class="rounded border px-4 py-2 text-sm font-medium disabled:opacity-50"
+                        @click="verify('failed')"
+                    >
+                        Mark failed
+                    </button>
+                </div>
+                <p v-if="verifyError" class="mt-2 text-sm text-red-600">
+                    {{ verifyError }}
+                </p>
             </div>
         </div>
     </div>

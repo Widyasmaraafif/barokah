@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * PayNet payment intent for one order (spec §10.2/§15.3).
@@ -26,6 +27,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $transaction_id
  * @property array<string, mixed>|null $payload
  * @property array<string, mixed>|null $callback_payload
+ * @property string|null $proof_path
+ * @property Carbon|null $proof_uploaded_at
  * @property Carbon|null $paid_at
  * @property Carbon|null $failed_at
  * @property Carbon|null $created_at
@@ -41,6 +44,8 @@ use Illuminate\Support\Carbon;
     'transaction_id',
     'payload',
     'callback_payload',
+    'proof_path',
+    'proof_uploaded_at',
     'paid_at',
     'failed_at',
 ])]
@@ -62,9 +67,26 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'payload' => 'array',
             'callback_payload' => 'array',
+            'proof_uploaded_at' => 'datetime',
             'paid_at' => 'datetime',
             'failed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Public URL for the uploaded proof image (null when not uploaded).
+     */
+    public function proofUrl(): ?string
+    {
+        if ($this->proof_path === null || $this->proof_path === '') {
+            return null;
+        }
+
+        if (str_starts_with($this->proof_path, 'http')) {
+            return $this->proof_path;
+        }
+
+        return Storage::disk('public')->url($this->proof_path);
     }
 
     /**

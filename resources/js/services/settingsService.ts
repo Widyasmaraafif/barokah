@@ -25,7 +25,7 @@ export async function fetchPublicSettings(
 
     const values = (await response.json()) as PublicSettings;
 
-    for (const key of ['branding.logo_url', 'branding.favicon_url']) {
+    for (const key of ['branding.logo_url', 'branding.favicon_url', 'payment.qr_code_url']) {
         const value = values[key];
         if (typeof value === 'string' && value !== '' && !value.startsWith('http')) {
             values[key] = `/storage/${value.replace(/^\/+/, '')}`;

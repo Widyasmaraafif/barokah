@@ -90,7 +90,7 @@ class SettingsService
 
     protected function publicValue(string $key, mixed $value): mixed
     {
-        if (! in_array($key, ['branding.logo_url', 'branding.favicon_url'], true)
+        if (! in_array($key, ['branding.logo_url', 'branding.favicon_url', 'payment.qr_code_url'], true)
             || ! is_string($value)
             || $value === '') {
             return $value;

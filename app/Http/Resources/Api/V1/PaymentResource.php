@@ -36,6 +36,8 @@ class PaymentResource extends JsonResource
             'redirect_url' => $payload['redirect_url'] ?? $this->redirectUrl($payload),
             'qr_payload' => $payload['qr_payload'] ?? null,
             'transaction_id' => $this->transaction_id,
+            'proof_url' => $this->resource->proofUrl(),
+            'proof_uploaded_at' => $this->proof_uploaded_at,
             'paid_at' => $this->paid_at,
             'failed_at' => $this->failed_at,
             'created_at' => $this->created_at,

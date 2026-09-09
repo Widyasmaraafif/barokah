@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PaymentMethod;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -45,6 +46,32 @@ test('admin views order detail with item table data', function () {
         );
 
     expect($item->refresh()->product_name_snapshot)->toBe('Keripik Pisang');
+});
+
+test('admin order detail exposes shipping and proof for verification', function () {
+    $admin = adminOrderViewer();
+    $order = Order::factory()->create([
+        'shipping_address' => 'No. 99, Jalan Tujuan',
+        'shipping_state' => 'Selangor',
+        'shipping_city' => 'Shah Alam',
+        'shipping_post_code' => '40000',
+    ]);
+    $payment = Payment::factory()->create([
+        'order_id' => $order->id,
+        'payment_gateway' => 'manual',
+        'payment_method' => PaymentMethod::BankTransfer,
+        'amount' => $order->total,
+    ]);
+
+    $this->withoutVite()->actingAs($admin)->get(route('admin.orders.show', $order->order_number))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Orders/Show')
+            ->where('order.shipping_address', 'No. 99, Jalan Tujuan')
+            ->where('order.shipping_city', 'Shah Alam')
+            ->where('order.payment.id', $payment->id)
+            ->has('order.payment.proof_url')
+        );
 });
 
 test('guests and buyers cannot view admin order detail', function () {

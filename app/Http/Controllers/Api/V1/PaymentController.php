@@ -52,6 +52,35 @@ class PaymentController extends Controller
     }
 
     /**
+     * Upload proof image for a pending manual (bank_transfer/qr_code)
+     * payment. Guest orders stay reachable by order_number (TBC §12).
+     */
+    public function proof(Request $request, string $orderNumber): JsonResponse
+    {
+        $validated = $request->validate([
+            'proof' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ]);
+
+        $order = Order::query()->where('order_number', $orderNumber)->with('payment')->first();
+
+        if ($order === null || ! $this->canAccess($request, $order)) {
+            abort(404);
+        }
+
+        if ($order->payment === null) {
+            return response()->json(['message' => 'No payment found for this order.'], 404);
+        }
+
+        try {
+            $payment = $this->payments->storeProof($order->payment, $validated['proof']);
+        } catch (InvalidArgumentException $e) {
+            abort(409, $e->getMessage());
+        }
+
+        return (new PaymentResource($payment->load('order')))->response()->setStatusCode(200);
+    }
+
+    /**
      * Poll the payment status for pending UX (spec §15.5/§15.8).
      */
     public function show(Request $request, string $orderNumber): PaymentResource|JsonResponse

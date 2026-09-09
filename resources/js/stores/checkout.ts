@@ -8,6 +8,10 @@ export type BuyerInformation = {
     post_code: string;
     phone: string;
     email: string;
+    shipping_address: string;
+    shipping_state: string;
+    shipping_city: string;
+    shipping_post_code: string;
 };
 
 export type CheckoutStep = 1 | 2 | 3 | 4;
@@ -34,6 +38,10 @@ const state = reactive<CheckoutState>({
         post_code: '',
         phone: '',
         email: '',
+        shipping_address: '',
+        shipping_state: '',
+        shipping_city: '',
+        shipping_post_code: '',
     },
     shippingMethod: 'fixed',
     paymentMethod: 'fpx',

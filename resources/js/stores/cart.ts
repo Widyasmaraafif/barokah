@@ -65,5 +65,5 @@ export function useCartStore() {
     const count = computed(() => state.items.reduce((sum, item) => sum + item.quantity, 0));
     const subtotal = computed(() => state.items.reduce((sum, item) => sum + item.price * item.quantity, 0));
 
-    return { state, count, subtotal, add, update, remove };
+    return { state, count, subtotal, add, update, remove, clear };
 }
