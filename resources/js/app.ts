@@ -4,6 +4,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
+import { useSettingsStore } from '@/stores/settings';
+
+void useSettingsStore().loadSettings();
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

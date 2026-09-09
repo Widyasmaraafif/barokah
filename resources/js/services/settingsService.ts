@@ -23,7 +23,16 @@ export async function fetchPublicSettings(
         throw new Error('Failed to load public settings.');
     }
 
-    cache = (await response.json()) as PublicSettings;
+    const values = (await response.json()) as PublicSettings;
+
+    for (const key of ['branding.logo_url', 'branding.favicon_url']) {
+        const value = values[key];
+        if (typeof value === 'string' && value !== '' && !value.startsWith('http')) {
+            values[key] = `/storage/${value.replace(/^\/+/, '')}`;
+        }
+    }
+
+    cache = values;
 
     return cache;
 }

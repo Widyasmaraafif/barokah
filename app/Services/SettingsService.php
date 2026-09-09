@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\SettingType;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class SettingsService
@@ -48,13 +49,16 @@ class SettingsService
 
             foreach ($this->defaultDefinitions() as $key => $definition) {
                 if (($definition['is_public'] ?? false) === true) {
-                    $public[$key] = $this->decodeValue($definition['value'] ?? null, $definition['type'] ?? SettingType::String);
+                    $public[$key] = $this->publicValue(
+                        $key,
+                        $this->decodeValue($definition['value'] ?? null, $definition['type'] ?? SettingType::String),
+                    );
                 }
             }
 
             foreach (Setting::query()->orderBy('key')->get() as $setting) {
                 if ($setting->is_public) {
-                    $public[$setting->key] = $this->decode($setting);
+                    $public[$setting->key] = $this->publicValue($setting->key, $this->decode($setting));
                 } else {
                     $privateKeys[] = $setting->key;
                 }
@@ -82,6 +86,19 @@ class SettingsService
     public function get(string $key, mixed $default = null): mixed
     {
         return $this->all()[$key] ?? $default;
+    }
+
+    protected function publicValue(string $key, mixed $value): mixed
+    {
+        if (! in_array($key, ['branding.logo_url', 'branding.favicon_url'], true)
+            || ! is_string($value)
+            || $value === '') {
+            return $value;
+        }
+
+        return str_starts_with($value, 'http')
+            ? $value
+            : Storage::disk('public')->url($value);
     }
 
     public function set(string $key, mixed $value): Setting

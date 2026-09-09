@@ -25,6 +25,10 @@ function siteName(): string {
     return getSettingValue<string>('branding.site_name', 'Barokah');
 }
 
+function logoUrl(): string {
+    return getSettingValue<string>('branding.logo_url', '');
+}
+
 function submitSearch(): void {
     emit('search', query.value);
     router.get(
@@ -54,7 +58,14 @@ function searchKeyword(keyword: string): void {
                 class="flex shrink-0 items-center gap-2"
                 aria-label="Marketplace home"
             >
+                <img
+                    v-if="logoUrl()"
+                    :src="logoUrl()"
+                    :alt="siteName()"
+                    class="h-9 max-w-32 rounded-sm bg-white object-contain p-1"
+                />
                 <span
+                    v-else
                     class="flex h-9 w-9 items-center justify-center rounded-sm bg-white text-lg font-bold"
                     style="color: var(--brand-primary)"
                     aria-hidden="true"

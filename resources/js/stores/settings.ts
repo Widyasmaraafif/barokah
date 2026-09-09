@@ -23,6 +23,17 @@ function applyBrandColors(values: PublicSettings): void {
         return;
     }
 
+    const favicon = values['branding.favicon_url'];
+    if (typeof favicon === 'string' && favicon !== '') {
+        let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+        }
+        link.href = favicon;
+    }
+
     const primary = values['branding.primary_color'];
     const secondary = values['branding.secondary_color'];
 

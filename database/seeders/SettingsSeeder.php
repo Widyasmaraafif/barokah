@@ -29,7 +29,15 @@ class SettingsSeeder extends Seeder
         $defaults = config('marketplace.settings_defaults', []);
 
         foreach ($defaults as $key => $definition) {
-            if (Setting::query()->where('key', $key)->exists()) {
+            $setting = Setting::query()->where('key', $key)->first();
+
+            if ($setting !== null) {
+                $setting->update([
+                    'type' => $definition['type'] ?? $setting->type,
+                    'group' => $definition['group'] ?? $setting->group,
+                    'is_public' => $definition['is_public'] ?? $setting->is_public,
+                ]);
+
                 continue;
             }
 

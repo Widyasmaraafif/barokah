@@ -10,6 +10,7 @@ use App\Services\SettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
@@ -53,29 +54,31 @@ class SettingController extends Controller
             'payment.qr_code_url' => $request->file('payment_qr_code'),
         ];
 
-        foreach ($uploadedBranding as $key => $file) {
-            if ($file === null) {
-                continue;
+        DB::transaction(function () use ($request, $settings, $uploadedBranding, &$updated): void {
+            foreach ($uploadedBranding as $key => $file) {
+                if ($file === null) {
+                    continue;
+                }
+
+                $oldPath = Setting::query()->where('key', $key)->value('value');
+                if (is_string($oldPath) && $oldPath !== '') {
+                    Storage::disk('public')->delete($oldPath);
+                }
+
+                $updated[] = $settings->set($key, $file->store($key === 'payment.qr_code_url' ? 'payment' : 'branding', 'public'));
             }
 
-            $oldPath = Setting::query()->where('key', $key)->value('value');
-            if (is_string($oldPath) && $oldPath !== '') {
-                Storage::disk('public')->delete($oldPath);
-            }
+            foreach ($request->pairs() as $key => $value) {
+                if (array_key_exists($key, $uploadedBranding)) {
+                    continue;
+                }
+                if ($request->isUnchangedPrivate($key, $value)) {
+                    continue;
+                }
 
-            $updated[] = $settings->set($key, $file->store($key === 'payment.qr_code_url' ? 'payment' : 'branding', 'public'));
-        }
-
-        foreach ($request->pairs() as $key => $value) {
-            if (array_key_exists($key, $uploadedBranding)) {
-                continue;
+                $updated[] = $settings->set($key, $request->sanitizedValue($key, $value));
             }
-            if ($request->isUnchangedPrivate($key, $value)) {
-                continue;
-            }
-
-            $updated[] = $settings->set($key, $request->sanitizedValue($key, $value));
-        }
+        });
 
         $settings->forget();
 
