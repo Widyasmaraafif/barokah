@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Admin settings API (spec §11.8): list all settings with private values
@@ -46,8 +47,29 @@ class SettingController extends Controller
     public function update(UpdateAdminSettingsRequest $request, SettingsService $settings): JsonResponse
     {
         $updated = [];
+        $uploadedBranding = [
+            'branding.logo_url' => $request->file('branding_logo'),
+            'branding.favicon_url' => $request->file('branding_favicon'),
+            'payment.qr_code_url' => $request->file('payment_qr_code'),
+        ];
+
+        foreach ($uploadedBranding as $key => $file) {
+            if ($file === null) {
+                continue;
+            }
+
+            $oldPath = Setting::query()->where('key', $key)->value('value');
+            if (is_string($oldPath) && $oldPath !== '') {
+                Storage::disk('public')->delete($oldPath);
+            }
+
+            $updated[] = $settings->set($key, $file->store($key === 'payment.qr_code_url' ? 'payment' : 'branding', 'public'));
+        }
 
         foreach ($request->pairs() as $key => $value) {
+            if (array_key_exists($key, $uploadedBranding)) {
+                continue;
+            }
             if ($request->isUnchangedPrivate($key, $value)) {
                 continue;
             }

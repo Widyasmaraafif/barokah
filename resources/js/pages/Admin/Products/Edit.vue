@@ -267,12 +267,6 @@ const existingImages = computed(() =>
                     <RichTextEditor
                         v-model="form.description"
                     />
-                    <!-- <textarea
-                        id="description"
-                        v-model="form.description"
-                        rows="4"
-                        class="border-input min-h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
-                    /> -->
                     <InputError :message="errors.description" />
                 </div>
 

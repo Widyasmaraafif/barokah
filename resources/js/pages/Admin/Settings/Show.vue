@@ -43,6 +43,29 @@ const values = reactive<Record<string, string | number | boolean | string[] | nu
 const errors = ref<Record<string, string>>({});
 const isSaving = ref(false);
 const notice = ref<string | null>(null);
+const logoFile = ref<File | null>(null);
+const faviconFile = ref<File | null>(null);
+const logoPreview = ref<string | null>(null);
+const faviconPreview = ref<string | null>(null);
+const qrCodeFile = ref<File | null>(null);
+const qrCodePreview = ref<string | null>(null);
+
+function onBrandingFile(field: 'logo' | 'favicon', event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    if (field === 'logo') {
+        logoFile.value = file;
+        logoPreview.value = file ? URL.createObjectURL(file) : null;
+    } else {
+        faviconFile.value = file;
+        faviconPreview.value = file ? URL.createObjectURL(file) : null;
+    }
+}
+
+function onQrCodeFile(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    qrCodeFile.value = file;
+    qrCodePreview.value = file ? URL.createObjectURL(file) : null;
+}
 
 const groupLabel = computed(() => props.activeGroup);
 
@@ -64,23 +87,27 @@ async function save(): Promise<void> {
     notice.value = null;
 
     try {
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('settings', JSON.stringify(props.settings.map((setting) => ({
+            key: setting.key,
+            value: values[setting.key] ?? null,
+        }))));
+        if (logoFile.value) formData.append('branding_logo', logoFile.value);
+        if (faviconFile.value) formData.append('branding_favicon', faviconFile.value);
+        if (qrCodeFile.value) formData.append('payment_qr_code', qrCodeFile.value);
+
         const response = await fetch('/api/v1/admin/settings', {
-            method: 'PUT',
+            method: 'POST',
             credentials: 'same-origin',
             headers: {
                 Accept: 'application/json',
-                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN':
                     (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)
                         ?.content ?? '',
             },
-            body: JSON.stringify({
-                settings: props.settings.map((setting) => ({
-                    key: setting.key,
-                    value: values[setting.key] ?? null,
-                })),
-            }),
+            body: formData,
         });
 
         const payload = (await response.json()) as {
@@ -178,6 +205,21 @@ async function save(): Promise<void> {
                         :model-value="String(values[setting.key] ?? '#000000')"
                         @update:model-value="values[setting.key] = $event"
                     />
+                    <template v-else-if="activeGroup === 'branding' && setting.key === 'branding.logo_url'">
+                        <img v-if="logoPreview || values[setting.key]" :src="logoPreview || String(values[setting.key])" alt="Logo preview" class="h-16 max-w-48 rounded border object-contain p-2" />
+                        <Input :id="setting.key" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" @change="onBrandingFile('logo', $event)" />
+                        <p class="text-muted-foreground text-xs">PNG, JPG, WebP, or SVG. Max 2MB.</p>
+                    </template>
+                    <template v-else-if="activeGroup === 'branding' && setting.key === 'branding.favicon_url'">
+                        <img v-if="faviconPreview || values[setting.key]" :src="faviconPreview || String(values[setting.key])" alt="Favicon preview" class="h-12 w-12 rounded border object-contain p-2" />
+                        <Input :id="setting.key" type="file" accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml" @change="onBrandingFile('favicon', $event)" />
+                        <p class="text-muted-foreground text-xs">PNG, JPG, WebP, ICO, or SVG. Max 1MB.</p>
+                    </template>
+                    <template v-else-if="activeGroup === 'payment' && setting.key === 'payment.qr_code_url'">
+                        <img v-if="qrCodePreview || values[setting.key]" :src="qrCodePreview || String(values[setting.key])" alt="QR code preview" class="h-48 w-48 rounded border object-contain p-2" />
+                        <Input :id="setting.key" type="file" accept="image/png,image/jpeg,image/webp" @change="onQrCodeFile" />
+                        <p class="text-muted-foreground text-xs">PNG, JPG, or WebP. Max 2MB.</p>
+                    </template>
                     <Input
                         v-else
                         :id="setting.key"

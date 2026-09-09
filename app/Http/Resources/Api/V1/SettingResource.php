@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Admin setting entry (spec §11.8).
@@ -28,6 +29,9 @@ class SettingResource extends JsonResource
     {
         $isPublic = (bool) $this->is_public;
         $value = $this->decodedValue();
+        if (in_array($this->key, ['branding.logo_url', 'branding.favicon_url', 'payment.qr_code_url'], true) && is_string($value) && $value !== '') {
+            $value = str_starts_with($value, 'http') ? $value : Storage::disk('public')->url($value);
+        }
 
         return [
             'key' => $this->key,

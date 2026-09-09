@@ -68,6 +68,17 @@ class SettingsService
         });
     }
 
+    /**
+     * @return array<string, array{value?: mixed, type?: mixed, group?: string, is_public?: bool}>
+     */
+    public function definitionsFor(string $group): array
+    {
+        return array_filter(
+            $this->defaultDefinitions(),
+            static fn (array $definition): bool => ($definition['group'] ?? 'general') === $group,
+        );
+    }
+
     public function get(string $key, mixed $default = null): mixed
     {
         return $this->all()[$key] ?? $default;

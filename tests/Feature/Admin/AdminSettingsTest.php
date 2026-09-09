@@ -13,6 +13,8 @@ use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\SettingsService;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 function adminUser(): User
 {
@@ -70,6 +72,56 @@ test('admin settings update validates and sanitizes per key', function () {
     $response->assertOk();
 
     expect(app(SettingsService::class)->get('branding.site_name'))->toBe('Barokah');
+});
+
+test('admins can upload branding logo and favicon', function () {
+    Storage::fake('public');
+    $admin = adminUser();
+
+    $response = $this->actingAs($admin)->post('/api/v1/admin/settings', [
+        '_method' => 'PUT',
+        'settings' => json_encode([
+            ['key' => 'branding.site_name', 'value' => 'Barokah'],
+            ['key' => 'branding.logo_url', 'value' => null],
+            ['key' => 'branding.favicon_url', 'value' => null],
+        ]),
+        'branding_logo' => UploadedFile::fake()->image('logo.png'),
+        'branding_favicon' => UploadedFile::fake()->image('favicon.png'),
+    ]);
+
+    $response->assertOk();
+    expect(app(SettingsService::class)->get('branding.logo_url'))->not->toBe('');
+    expect(app(SettingsService::class)->get('branding.favicon_url'))->not->toBe('');
+    Storage::disk('public')->assertExists(app(SettingsService::class)->get('branding.logo_url'));
+    Storage::disk('public')->assertExists(app(SettingsService::class)->get('branding.favicon_url'));
+});
+
+test('admins can configure payment methods and upload QR code', function () {
+    Storage::fake('public');
+    $admin = adminUser();
+
+    $response = $this->actingAs($admin)->post('/api/v1/admin/settings', [
+        '_method' => 'PUT',
+        'settings' => json_encode([
+            ['key' => 'payment.bank_transfer_enabled', 'value' => true],
+            ['key' => 'payment.bank_name', 'value' => 'Maybank'],
+            ['key' => 'payment.bank_account_name', 'value' => 'Nama Pemilik Rekening'],
+            ['key' => 'payment.bank_account_number', 'value' => '1234567890'],
+            ['key' => 'payment.qr_code_enabled', 'value' => true],
+            ['key' => 'payment.paynet_enabled', 'value' => false],
+        ]),
+        'payment_qr_code' => UploadedFile::fake()->image('payment-qr.png'),
+    ]);
+
+    $response->assertOk();
+
+    $service = app(SettingsService::class);
+    expect($service->get('payment.bank_name'))->toBe('Maybank')
+        ->and($service->get('payment.bank_account_name'))->toBe('Nama Pemilik Rekening')
+        ->and($service->get('payment.bank_account_number'))->toBe('1234567890')
+        ->and($service->get('payment.paynet_enabled'))->toBeFalse();
+
+    Storage::disk('public')->assertExists($service->get('payment.qr_code_url'));
 });
 
 test('private settings are masked in admin api and absent from public api', function () {

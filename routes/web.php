@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SellerDashboardController;
+use App\Http\Controllers\SellerProductController;
 use App\Http\Controllers\SellerSettingsController;
 use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\HomeController;
@@ -27,6 +28,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('seller/settings', SellerSettingsController::class)
         ->middleware('can:seller')
         ->name('seller.settings');
+    Route::get('seller/products', [SellerProductController::class, 'index'])
+        ->middleware('can:seller')
+        ->name('seller.products.index');
+    Route::get('seller/products/create', [SellerProductController::class, 'create'])
+        ->middleware('can:seller')
+        ->name('seller.products.create');
+    Route::get('seller/products/{product:id}/edit', [SellerProductController::class, 'edit'])
+        ->middleware('can:seller')
+        ->name('seller.products.edit');
 });
 
 require __DIR__.'/settings.php';

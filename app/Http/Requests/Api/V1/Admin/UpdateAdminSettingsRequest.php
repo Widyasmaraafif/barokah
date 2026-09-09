@@ -8,6 +8,7 @@ use App\Models\Setting;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\File;
 use Illuminate\Validation\Validator as ValidatorInstance;
 
 /**
@@ -40,7 +41,18 @@ class UpdateAdminSettingsRequest extends FormRequest
             'settings' => ['sometimes', 'array'],
             'settings.*.key' => ['required', 'string', 'max:255'],
             'key' => ['sometimes', 'required', 'string', 'max:255'],
+            'branding_logo' => ['sometimes', 'nullable', File::image()->max(2048)],
+            'branding_favicon' => ['sometimes', 'nullable', File::image()->max(1024)],
+            'payment_qr_code' => ['sometimes', 'nullable', File::image()->max(2048)],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('settings'))) {
+            $decoded = json_decode($this->input('settings'), true);
+            $this->merge(['settings' => is_array($decoded) ? $decoded : []]);
+        }
     }
 
     public function withValidator(ValidatorInstance $validator): void
@@ -182,8 +194,11 @@ class UpdateAdminSettingsRequest extends FormRequest
             'checkout.order_expiration_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
             'checkout.min_order_amount', 'checkout.max_order_amount' => ['nullable', 'string', 'max:20', 'regex:/^\d+(\.\d{1,2})?$/'],
             'checkout.guest_checkout_enabled' => ['boolean'],
+            'payment.bank_transfer_enabled', 'payment.qr_code_enabled', 'payment.paynet_enabled',
             'payment.fpx_enabled', 'payment.duitnow_enabled',
             'payment.sandbox_enabled' => ['boolean'],
+            'payment.bank_name', 'payment.bank_account_name', 'payment.bank_account_number' => ['nullable', 'string', 'max:255'],
+            'payment.qr_code_url' => ['nullable', 'string', 'max:2000'],
             'payment.gateway' => ['required', 'string', 'max:50'],
             'payment.merchant_id', 'payment.secret_key',
             'payment.api_base' => ['nullable', 'string', 'max:2000'],

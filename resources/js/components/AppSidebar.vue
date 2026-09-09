@@ -37,7 +37,11 @@ import { index as adminSellersIndex } from '@/routes/admin/sellers';
 import { show as adminSettingsShow } from '@/routes/admin/settings';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as productsIndex } from '@/routes/products';
-import { dashboard as sellerDashboard, settings as sellerSettings } from '@/routes/seller';
+import {
+    dashboard as sellerDashboard,
+    settings as sellerSettings,
+} from '@/routes/seller';
+import { index as sellerProductsIndex } from '@/routes/seller/products';
 import type { NavItem } from '@/types';
 
 type SidebarUser = {
@@ -79,6 +83,11 @@ const sellerNavItems: NavItem[] = [
         title: 'Seller dashboard',
         href: sellerDashboard(),
         icon: Store,
+    },
+    {
+        title: 'Seller products',
+        href: sellerProductsIndex(),
+        icon: Package,
     },
     {
         title: 'Store settings',

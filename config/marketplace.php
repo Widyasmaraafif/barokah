@@ -226,9 +226,49 @@ return [
             'is_public' => true,
         ],
 
-        // Payment (spec §15; secrets stay server-only, spec §20).
-        // TBC (spec §24 item 1): no admin payment UI yet; both methods stay
-        // enabled by default until toggles are confirmed.
+        // Payment methods.
+        'payment.bank_transfer_enabled' => [
+            'value' => true,
+            'type' => SettingType::Boolean,
+            'group' => 'payment',
+            'is_public' => true,
+        ],
+        'payment.bank_name' => [
+            'value' => '',
+            'type' => SettingType::String,
+            'group' => 'payment',
+            'is_public' => true,
+        ],
+        'payment.bank_account_name' => [
+            'value' => '',
+            'type' => SettingType::String,
+            'group' => 'payment',
+            'is_public' => true,
+        ],
+        'payment.bank_account_number' => [
+            'value' => '',
+            'type' => SettingType::String,
+            'group' => 'payment',
+            'is_public' => true,
+        ],
+        'payment.qr_code_enabled' => [
+            'value' => true,
+            'type' => SettingType::Boolean,
+            'group' => 'payment',
+            'is_public' => true,
+        ],
+        'payment.qr_code_url' => [
+            'value' => '',
+            'type' => SettingType::Image,
+            'group' => 'payment',
+            'is_public' => true,
+        ],
+        'payment.paynet_enabled' => [
+            'value' => true,
+            'type' => SettingType::Boolean,
+            'group' => 'payment',
+            'is_public' => true,
+        ],
         'payment.fpx_enabled' => [
             'value' => true,
             'type' => SettingType::Boolean,
