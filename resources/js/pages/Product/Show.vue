@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
 import { useCheckoutStore } from '@/stores/checkout';
+import { useCartStore } from '@/stores/cart';
 import { useSettingsStore } from '@/stores/settings';
 
 type DetailImage = {
@@ -33,6 +34,7 @@ const props = defineProps<{
 
 const { formatAmount, loadSettings } = useSettingsStore();
 const { startBuy } = useCheckoutStore();
+const { add } = useCartStore();
 
 /**
  * A single JsonResource serializes through Inertia as `{ data: {...} }`;
@@ -80,6 +82,17 @@ function decrement(): void {
     if (quantity.value > 1) {
         quantity.value -= 1;
     }
+}
+
+function addToCart(): void {
+    add({
+        productId: product.value.id,
+        slug: product.value.slug,
+        name: product.value.name,
+        price: Number(product.value.price),
+        image: product.value.primary_image,
+        stock: product.value.stock,
+    }, quantity.value);
 }
 </script>
 
@@ -295,6 +308,7 @@ function decrement(): void {
                             type="button"
                             :disabled="isOutOfStock"
                             class="flex h-12 flex-1 items-center justify-center gap-2 rounded-sm border-2 border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] px-6 font-semibold text-[var(--brand-primary)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                            @click="addToCart"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -331,8 +345,7 @@ function decrement(): void {
                         </Link>
                     </div>
                     <p class="mt-2 text-xs text-[var(--text-muted)]">
-                        Buying now goes straight to checkout. Add to Cart is a
-                        UI placeholder (spec §24 item 24) — no cart backend.
+                        Cart items are saved in this browser and remain available after refresh.
                     </p>
                 </div>
             </div>

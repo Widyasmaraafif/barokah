@@ -32,6 +32,7 @@ class ShippingController extends Controller
                 [
                     'address' => $validated['address'],
                     'state' => $validated['state'],
+                    'city' => $validated['city'] ?? null,
                     'post_code' => $validated['post_code'],
                 ],
                 $subtotal,

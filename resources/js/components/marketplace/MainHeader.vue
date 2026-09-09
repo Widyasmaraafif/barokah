@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
 import { Search, ShoppingCart } from '@lucide/vue';
+import { useCartStore } from '@/stores/cart';
 import { computed, ref } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
 
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 }>();
 
 const { getSettingValue, loadSettings } = useSettingsStore();
+const { count: cartCount } = useCartStore();
 const query = ref(props.initialSearch);
 const keywords = computed(() => ['Keripik', 'Hijab', 'Kerudung']);
 
@@ -114,20 +116,19 @@ function searchKeyword(keyword: string): void {
                 </div>
             </div>
 
-            <button
-                type="button"
+            <Link
+                href="/cart"
                 class="relative flex h-11 w-12 shrink-0 items-center justify-center rounded-sm transition hover:bg-white/10"
-                aria-label="Cart (placeholder, no cart backend)"
-                title="Cart is a UI placeholder (spec §24 item 24)"
+                aria-label="Shopping cart"
             >
                 <ShoppingCart class="h-6 w-6" />
                 <span
                     class="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold"
                     style="color: var(--brand-primary)"
                 >
-                    0
+                    {{ cartCount }}
                 </span>
-            </button>
+            </Link>
         </div>
     </div>
 </template>

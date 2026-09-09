@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\V1\Admin\AdminProductController;
 use App\Http\Controllers\Api\V1\Admin\AdminSellerController;
+use App\Http\Controllers\Api\V1\Admin\AdminShippingRateController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\CategoryController;
@@ -116,6 +117,11 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
             Route::get('admin/payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
             Route::get('admin/payments/{payment}', [AdminPaymentController::class, 'show'])->name('admin.payments.show');
+
+            Route::apiResource('admin/shipping-rates', AdminShippingRateController::class)
+                ->except(['show'])
+                ->parameters(['shipping-rates' => 'shippingRate'])
+                ->names('admin.shipping-rates');
         });
     });
 });

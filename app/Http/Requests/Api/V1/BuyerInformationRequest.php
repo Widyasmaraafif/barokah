@@ -47,6 +47,10 @@ class BuyerInformationRequest extends FormRequest
             'buyer.post_code' => ['required', 'string', 'max:20'],
             'buyer.phone' => ['required', 'string', 'max:30'],
             'buyer.email' => ['nullable', 'email', 'max:255'],
+            'shipping_address' => ['required', 'string', 'max:500'],
+            'shipping_state' => ['required', 'string', Rule::in(config('malaysia.states', []))],
+            'shipping_city' => ['nullable', 'string', 'max:100', new CityInState('shipping_state')],
+            'shipping_post_code' => ['required', 'string', 'max:20'],
             // Fixed Rate is the default; external resolves via ShippingService (spec §16).
             'shipping_method' => ['nullable', 'string', Rule::in(['fixed', 'external'])],
         ];

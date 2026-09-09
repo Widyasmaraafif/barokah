@@ -2,6 +2,8 @@
 
 namespace App\Services\Shipping;
 
+use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Services\SettingsService;
 
 /**
@@ -20,7 +22,7 @@ class FixedRateShippingProvider implements ShippingProviderContract
     }
 
     /**
-     * @param  array{address: string, state: string, post_code: string}  $address
+     * @param  array{address: string, state: string, city?: string|null, post_code: string}  $address
      * @param  array<int, array{product_id: int, quantity: int}>  $lines
      * @return array{method: string, provider: ?string, fee: float, meta: array<string, mixed>}
      */
@@ -37,6 +39,44 @@ class FixedRateShippingProvider implements ShippingProviderContract
         );
 
         $freeApplied = $freeEnabled && $subtotal >= $threshold;
+        $sellerLocations = Product::query()
+            ->whereIn('id', collect($lines)->pluck('product_id'))
+            ->with('seller:id,state,city')
+            ->get()
+            ->map(fn (Product $product): array => [
+                'state' => $product->seller?->state,
+                'city' => $product->seller?->city,
+            ])
+            ->unique(fn (array $location): string => ($location['state'] ?? '').'|'.($location['city'] ?? ''));
+
+        $configuredRate = ShippingRate::query()
+            ->where('to_state', $address['state'])
+            ->where('is_active', true)
+            ->where(function ($query) use ($address): void {
+                $query->where('to_city', $address['city'] ?? null)
+                    ->orWhereNull('to_city');
+            })
+            ->where(function ($query) use ($sellerLocations): void {
+                $query->whereNull('from_state');
+
+                foreach ($sellerLocations as $location) {
+                    if ($location['state'] === null) {
+                        continue;
+                    }
+
+                    $query->orWhere(function ($origin) use ($location): void {
+                        $origin->where('from_state', $location['state'])
+                            ->where(function ($city) use ($location): void {
+                                $city->where('from_city', $location['city'])
+                                    ->orWhereNull('from_city');
+                            });
+                    });
+                }
+            })
+            ->orderByRaw('to_city is null')
+            ->orderByRaw('from_city is null')
+            ->value('rate');
+        $rate = $configuredRate !== null ? (float) $configuredRate : $rate;
         $fee = $freeApplied ? 0.0 : $rate;
 
         return [

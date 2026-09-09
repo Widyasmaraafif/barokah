@@ -24,7 +24,7 @@ class ShippingService
     /**
      * Quote a shipping fee for checkout or the standalone quote endpoint.
      *
-     * @param  array{address: string, state: string, post_code: string}  $address
+     * @param  array{address: string, state: string, city?: string|null, post_code: string}  $address
      * @param  array<int, array{product_id: int, quantity: int}>  $lines
      * @return array{method: string, provider: ?string, fee: float, formatted: string, currency_code: string, meta: array<string, mixed>}
      */

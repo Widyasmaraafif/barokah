@@ -48,7 +48,7 @@ class CityInState implements DataAwareRule, ValidationRule
         /** @var array<string, array<int, string>> $cities */
         $cities = config('malaysia_cities', []);
 
-        if (! array_key_exists($state, $cities)) {
+        if (! isset($cities[$state]) || $cities[$state] === []) {
             return;
         }
 

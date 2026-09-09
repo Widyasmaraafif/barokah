@@ -6,6 +6,7 @@ import { home, login } from '@/routes';
 import { edit as profileEdit } from '@/routes/profile';
 import { index as productsIndex } from '@/routes/products';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
+import { useCartStore } from '@/stores/cart';
 
 const page = usePage();
 const authUser = computed(
@@ -14,6 +15,7 @@ const authUser = computed(
             .auth?.user,
 );
 const { isCurrentUrl } = useCurrentUrl();
+const { count: cartCount } = useCartStore();
 
 const items = computed(() => [
     { label: 'Home', href: home(), icon: House, placeholder: false },
@@ -24,10 +26,10 @@ const items = computed(() => [
         placeholder: true,
     },
     {
-        label: 'Cart',
-        href: productsIndex(),
+        label: `Cart (${cartCount.value})`,
+        href: '/cart',
         icon: ShoppingCart,
-        placeholder: true,
+        placeholder: false,
     },
     {
         label: 'Me',

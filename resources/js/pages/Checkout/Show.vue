@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { computed, reactive, ref, watch } from 'vue';
 import { useCheckoutStore, type CheckoutStep } from '@/stores/checkout';
+import { useCartStore } from '@/stores/cart';
 import { useSettingsStore } from '@/stores/settings';
 import { getMalaysiaCities } from '@/composables/useMalaysiaCities';
 import malaysiaStates from '@/data/malaysia-states.json';
@@ -19,18 +20,29 @@ type WizardProduct = {
     stock: number;
 };
 
+type CartCheckoutItem = {
+    productId: number;
+    name: string;
+    price: number;
+    quantity: number;
+};
+
 const props = defineProps<{
-    product: WizardProduct;
+    product: WizardProduct | null;
     profile: Record<string, string | null>;
+    cartCheckout: boolean;
 }>();
 
 const { formatAmount, loadSettings } = useSettingsStore();
 const { state, setStep, setOrderNumber } = useCheckoutStore();
+const { state: cartState, clear: clearCart } = useCartStore();
 
 void loadSettings();
 
-state.productId = props.product.id;
-state.productSlug = props.product.slug;
+if (!props.cartCheckout && props.product) {
+    state.productId = props.product.id;
+    state.productSlug = props.product.slug;
+}
 
 if (state.step < 1 || state.step > 4) {
     setStep(1);
@@ -44,23 +56,45 @@ const buyer = reactive({
     post_code: state.buyer.post_code || props.profile.post_code || '',
     phone: state.buyer.phone || props.profile.phone || '',
     email: state.buyer.email || props.profile.email || '',
+    shipping_address: state.buyer.shipping_address || '',
+    shipping_state: state.buyer.shipping_state || '',
+    shipping_city: state.buyer.shipping_city || '',
+    shipping_post_code: state.buyer.shipping_post_code || '',
 });
 
 const cityOptions = computed(() =>
     buyer.state === '' ? [] : getMalaysiaCities(buyer.state),
 );
 
-watch(
-    () => buyer.state,
-    (nextState, prevState) => {
-        if (nextState !== prevState) {
-            buyer.city = '';
-        }
-    },
-);
+watch(() => buyer.state, (nextState, prevState) => {
+    if (nextState !== prevState) buyer.city = '';
+});
+watch(() => buyer.shipping_state, (nextState, prevState) => {
+    if (nextState !== prevState) buyer.shipping_city = '';
+});
 
 const quantity = ref(state.quantity || 1);
 const shippingMethod = ref(state.shippingMethod || 'fixed');
+const shippingFee = ref<number | null>(null);
+const isLoadingShipping = ref(false);
+const shippingError = ref<string | null>(null);
+const cartItems = computed<CartCheckoutItem[]>(() =>
+    cartState.items.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+    })),
+);
+
+const checkoutSubtotal = computed(() =>
+    props.cartCheckout
+        ? cartItems.value.reduce(
+              (total, item) => total + item.price * item.quantity,
+              0,
+          )
+        : Number(props.product?.price ?? 0) * quantity.value,
+);
 const paymentMethod = ref(state.paymentMethod || 'fpx');
 
 const fieldErrors = ref<Record<string, string>>({});
@@ -80,13 +114,22 @@ const steps: { id: CheckoutStep; label: string }[] = [
     { id: 4, label: 'Confirmation' },
 ];
 
-const subtotal = computed(
-    () => Number(props.product.price) * quantity.value,
-);
+const subtotal = computed(() => checkoutSubtotal.value);
 
-function next(): void {
-    if (state.step === 1 && !validateBuyer()) {
+async function next(): Promise<void> {
+    if (state.step === 1 && !validatePersonal()) {
         return;
+    }
+
+    if (state.step === 2) {
+        if (!validateShipping()) {
+            return;
+        }
+
+        await loadShippingQuote();
+        if (shippingError.value) {
+            return;
+        }
     }
 
     persistDraft();
@@ -104,12 +147,24 @@ function back(): void {
     }
 }
 
-function validateBuyer(): boolean {
+function validatePersonal(): boolean {
     const errors: Record<string, string> = {};
 
     if (buyer.name.trim() === '') {
         errors.name = 'Name is required.';
     }
+
+    if (buyer.phone.trim() === '') {
+        errors.phone = 'Phone number is required.';
+    }
+
+    fieldErrors.value = errors;
+
+    return Object.keys(errors).length === 0;
+}
+
+function validateShipping(): boolean {
+    const errors: Record<string, string> = {};
 
     if (buyer.address.trim() === '') {
         errors.address = 'Address is required.';
@@ -123,13 +178,50 @@ function validateBuyer(): boolean {
         errors.post_code = 'Post code is required.';
     }
 
-    if (buyer.phone.trim() === '') {
-        errors.phone = 'Phone number is required.';
-    }
-
     fieldErrors.value = errors;
 
     return Object.keys(errors).length === 0;
+}
+
+function validateBuyer(): boolean {
+    return validatePersonal() && validateShipping();
+}
+
+async function loadShippingQuote(): Promise<void> {
+    if (!validateShipping()) {
+        return;
+    }
+
+    isLoadingShipping.value = true;
+    shippingError.value = null;
+
+    try {
+        const response = await fetch('/api/v1/shipping/quote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+                address: buyer.address,
+                state: buyer.state,
+                city: buyer.city || null,
+                post_code: buyer.post_code,
+                method: 'fixed',
+                subtotal: checkoutSubtotal.value,
+                items: props.cartCheckout
+                    ? cartItems.value.map((item) => ({ product_id: item.productId, quantity: item.quantity }))
+                    : [{ product_id: props.product?.id, quantity: quantity.value }],
+            }),
+        });
+        const payload = (await response.json()) as { data?: { fee?: number }; message?: string };
+        if (!response.ok) {
+            shippingError.value = payload.message ?? 'Shipping quote failed.';
+            return;
+        }
+        shippingFee.value = payload.data?.fee ?? 0;
+    } catch {
+        shippingError.value = 'Shipping quote failed. Please try again.';
+    } finally {
+        isLoadingShipping.value = false;
+    }
 }
 
 function persistDraft(): void {
@@ -140,6 +232,11 @@ function persistDraft(): void {
 }
 
 async function placeOrder(): Promise<void> {
+    if (props.cartCheckout && cartItems.value.length === 0) {
+        submitError.value = 'Your cart is empty.';
+        return;
+    }
+
     if (!validateBuyer()) {
         setStep(1);
         return;
@@ -158,8 +255,17 @@ async function placeOrder(): Promise<void> {
                 Accept: 'application/json',
             },
             body: JSON.stringify({
-                product_id: props.product.id,
-                quantity: quantity.value,
+                ...(props.cartCheckout
+                    ? {
+                          items: cartItems.value.map((item) => ({
+                              product_id: item.productId,
+                              quantity: item.quantity,
+                          })),
+                      }
+                    : {
+                          product_id: props.product?.id,
+                          quantity: quantity.value,
+                      }),
                 buyer: {
                     name: buyer.name,
                     address: buyer.address,
@@ -197,6 +303,9 @@ async function placeOrder(): Promise<void> {
         }
 
         setOrderNumber(payload.data.order_number);
+        if (props.cartCheckout) {
+            clearCart();
+        }
         await initiatePayment(payload.data.order_number);
     } catch {
         submitError.value = 'Order creation failed. Please try again.';
@@ -278,9 +387,10 @@ function stopPolling(): void {
 </script>
 
 <template>
-    <Head :title="`Checkout - ${product.name}`" />
+    <MarketplaceLayout>
+        <Head :title="cartCheckout ? 'Cart checkout' : `Checkout - ${product?.name ?? ''}`" />
 
-    <div class="mx-auto w-full max-w-[1200px] px-4 py-6">
+        <div class="mx-auto w-full max-w-[1200px] px-4 py-6 pb-24">
         <ol class="mb-6 flex flex-wrap gap-2 text-xs">
             <li
                 v-for="step in steps"
@@ -313,81 +423,6 @@ function stopPolling(): void {
                                 {{ fieldErrors.name }}
                             </p>
                         </div>
-                        <div>
-                            <label class="mb-1 block text-sm" for="buyer-address">Address</label>
-                            <input
-                                id="buyer-address"
-                                v-model="buyer.address"
-                                type="text"
-                                class="h-10 w-full rounded border px-3 text-sm"
-                            />
-                            <p v-if="fieldErrors.address" class="mt-1 text-xs text-red-600">
-                                {{ fieldErrors.address }}
-                            </p>
-                        </div>
-                        <div class="grid gap-3 sm:grid-cols-2">
-                            <div>
-                                <label class="mb-1 block text-sm" for="buyer-state">State</label>
-                                <select
-                                    id="buyer-state"
-                                    v-model="buyer.state"
-                                    class="h-10 w-full rounded border bg-white px-3 text-sm"
-                                >
-                                    <option value="" disabled>Select state</option>
-                                    <option
-                                        v-for="stateOption in malaysiaStateOptions"
-                                        :key="stateOption"
-                                        :value="stateOption"
-                                    >
-                                        {{ stateOption }}
-                                    </option>
-                                </select>
-                                <p v-if="fieldErrors.state" class="mt-1 text-xs text-red-600">
-                                    {{ fieldErrors.state }}
-                                </p>
-                            </div>
-                            <div>
-                                <label class="mb-1 block text-sm" for="buyer-city">City</label>
-                                <select
-                                    id="buyer-city"
-                                    v-model="buyer.city"
-                                    :disabled="buyer.state === '' || cityOptions.length === 0"
-                                    class="h-10 w-full rounded border bg-white px-3 text-sm disabled:opacity-50"
-                                >
-                                    <option value="" disabled>
-                                        {{
-                                            buyer.state === ''
-                                                ? 'Select state first'
-                                                : cityOptions.length === 0
-                                                  ? 'No cities available'
-                                                  : 'Select city'
-                                        }}
-                                    </option>
-                                    <option
-                                        v-for="cityOption in cityOptions"
-                                        :key="cityOption"
-                                        :value="cityOption"
-                                    >
-                                        {{ cityOption }}
-                                    </option>
-                                </select>
-                                <p v-if="fieldErrors.city" class="mt-1 text-xs text-red-600">
-                                    {{ fieldErrors.city }}
-                                </p>
-                            </div>
-                            <div>
-                                <label class="mb-1 block text-sm" for="buyer-postcode">Post Code</label>
-                                <input
-                                    id="buyer-postcode"
-                                    v-model="buyer.post_code"
-                                    type="text"
-                                    class="h-10 w-full rounded border px-3 text-sm"
-                                />
-                                <p v-if="fieldErrors.post_code" class="mt-1 text-xs text-red-600">
-                                    {{ fieldErrors.post_code }}
-                                </p>
-                            </div>
-                        </div>
                         <div class="grid gap-3 sm:grid-cols-2">
                             <div>
                                 <label class="mb-1 block text-sm" for="buyer-phone">Phone Number</label>
@@ -414,28 +449,116 @@ function stopPolling(): void {
                                 </p>
                             </div>
                         </div>
-                        <div>
+                        <div v-if="!cartCheckout">
                             <label class="mb-1 block text-sm" for="checkout-quantity">Quantity</label>
                             <input
                                 id="checkout-quantity"
                                 v-model.number="quantity"
                                 type="number"
                                 min="1"
-                                :max="product.stock"
+                                :max="product?.stock"
                                 class="h-10 w-32 rounded border px-3 text-sm"
                             />
+                        </div>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <input v-model="buyer.address" placeholder="Buyer address" class="h-10 rounded border px-3 text-sm" />
+                            <select v-model="buyer.state" class="h-10 rounded border bg-white px-3 text-sm">
+                                <option value="" disabled>Select buyer state</option>
+                                <option v-for="stateOption in malaysiaStateOptions" :key="stateOption" :value="stateOption">{{ stateOption }}</option>
+                            </select>
+                            <select v-model="buyer.city" :disabled="buyer.state === ''" class="h-10 rounded border bg-white px-3 text-sm">
+                                <option value="">Select buyer city</option>
+                                <option v-for="cityOption in cityOptions" :key="cityOption" :value="cityOption">{{ cityOption }}</option>
+                            </select>
+                            <input v-model="buyer.post_code" placeholder="Buyer post code" class="h-10 rounded border px-3 text-sm" />
+                        </div>
+                        <div v-if="cartCheckout" class="space-y-2">
+                            <p class="text-sm font-medium">Cart items</p>
+                            <div
+                                v-for="item in cartItems"
+                                :key="item.productId"
+                                class="flex justify-between text-sm"
+                            >
+                                <span>{{ item.name }} × {{ item.quantity }}</span>
+                                <span>{{ formatAmount(item.price * item.quantity) }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div v-else-if="state.step === 2">
                     <h1 class="text-lg font-semibold">Shipping</h1>
+                    <div class="mt-4 space-y-3">
+                        <div>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label class="mb-1 block text-sm" for="shipping-state">Shipping state</label>
+                                    <select id="shipping-state" v-model="buyer.shipping_state" class="h-10 w-full rounded border bg-white px-3 text-sm">
+                                        <option value="" disabled>Select state</option>
+                                        <option v-for="stateOption in malaysiaStateOptions" :key="stateOption" :value="stateOption">{{ stateOption }}</option>
+                                    </select>
+                                    <p v-if="fieldErrors.shipping_state" class="mt-1 text-xs text-red-600">{{ fieldErrors.shipping_state }}</p>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm" for="shipping-city">Shipping city</label>
+                                    <select id="shipping-city" v-model="buyer.shipping_city" :disabled="buyer.shipping_state === '' || shippingCityOptions.length === 0" class="h-10 w-full rounded border bg-white px-3 text-sm disabled:opacity-50">
+                                        <option value="" disabled>Select city</option>
+                                        <option v-for="cityOption in shippingCityOptions" :key="cityOption" :value="cityOption">{{ cityOption }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm" for="shipping-postcode">Shipping post code</label>
+                                    <input id="shipping-postcode" v-model="buyer.shipping_post_code" type="text" class="h-10 w-full rounded border px-3 text-sm" />
+                                    <p v-if="fieldErrors.shipping_post_code" class="mt-1 text-xs text-red-600">{{ fieldErrors.shipping_post_code }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm" for="buyer-address">Buyer address</label>
+                            <input id="buyer-address" v-model="buyer.address" type="text" class="h-10 w-full rounded border px-3 text-sm" />
+                            <p v-if="fieldErrors.address" class="mt-1 text-xs text-red-600">
+                                {{ fieldErrors.address }}
+                            </p>
+                        </div>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label class="mb-1 block text-sm" for="buyer-state">State</label>
+                                <select id="buyer-state" v-model="buyer.state" class="h-10 w-full rounded border bg-white px-3 text-sm">
+                                    <option value="" disabled>Select state</option>
+                                    <option v-for="stateOption in malaysiaStateOptions" :key="stateOption" :value="stateOption">{{ stateOption }}</option>
+                                </select>
+                                <p v-if="fieldErrors.state" class="mt-1 text-xs text-red-600">{{ fieldErrors.state }}</p>
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm" for="buyer-city">City</label>
+                                <select id="buyer-city" v-model="buyer.city" :disabled="buyer.state === '' || cityOptions.length === 0" class="h-10 w-full rounded border bg-white px-3 text-sm disabled:opacity-50">
+                                    <option value="" disabled>{{ buyer.state === '' ? 'Select state first' : cityOptions.length === 0 ? 'No cities available' : 'Select city' }}</option>
+                                    <option v-for="cityOption in cityOptions" :key="cityOption" :value="cityOption">{{ cityOption }}</option>
+                                </select>
+                                <p v-if="fieldErrors.city" class="mt-1 text-xs text-red-600">{{ fieldErrors.city }}</p>
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm" for="buyer-postcode">Post Code</label>
+                                <input id="buyer-postcode" v-model="buyer.post_code" type="text" class="h-10 w-full rounded border px-3 text-sm" />
+                                <p v-if="fieldErrors.post_code" class="mt-1 text-xs text-red-600">{{ fieldErrors.post_code }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-muted-foreground">
+                        {{ buyer.city || buyer.state }} delivery location
+                    </p>
                     <label class="mt-4 flex items-center gap-2 text-sm">
                         <input v-model="shippingMethod" type="radio" value="fixed" />
                         Fixed rate shipping
                     </label>
-                    <p class="mt-2 text-xs text-muted-foreground">
-                        External shipping provider quote lands in Task 9 (spec §16).
+                    <p v-if="isLoadingShipping" class="mt-3 text-sm text-muted-foreground">
+                        Calculating shipping rate...
+                    </p>
+                    <p v-else-if="shippingFee !== null" class="mt-3 text-sm font-medium">
+                        Shipping fee: {{ formatAmount(shippingFee) }}
+                    </p>
+                    <p v-if="shippingError" class="mt-3 text-sm text-red-600">
+                        {{ shippingError }}
                     </p>
                 </div>
 
@@ -508,15 +631,27 @@ function stopPolling(): void {
             </section>
 
             <aside class="h-fit rounded border bg-white p-4">
-                <h2 class="text-sm font-semibold">{{ product.name }}</h2>
-                <p class="mt-2 text-lg font-semibold text-[var(--brand-primary)]">
-                    {{ formatAmount(Number(product.price)) }}
-                </p>
-                <p class="mt-1 text-xs text-muted-foreground">
-                    Quantity: {{ quantity }} · Subtotal:
-                    {{ formatAmount(subtotal) }}
-                </p>
+                <template v-if="cartCheckout">
+                    <h2 class="text-sm font-semibold">Cart summary</h2>
+                    <p class="mt-2 text-lg font-semibold text-[var(--brand-primary)]">
+                        {{ formatAmount(subtotal) }}
+                    </p>
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        {{ cartItems.length }} product{{ cartItems.length === 1 ? '' : 's' }}
+                    </p>
+                </template>
+                <template v-else>
+                    <h2 class="text-sm font-semibold">{{ product?.name }}</h2>
+                    <p class="mt-2 text-lg font-semibold text-[var(--brand-primary)]">
+                        {{ formatAmount(Number(product?.price ?? 0)) }}
+                    </p>
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Quantity: {{ quantity }} · Subtotal:
+                        {{ formatAmount(subtotal) }}
+                    </p>
+                </template>
             </aside>
         </div>
-    </div>
+        </div>
+    </MarketplaceLayout>
 </template>

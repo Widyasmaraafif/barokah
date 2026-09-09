@@ -4,6 +4,7 @@ use App\Enums\ProductStatus;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Seller;
+use App\Models\ShippingRate;
 use App\Models\User;
 
 function createCheckoutSeller(): User
@@ -37,18 +38,33 @@ function validBuyerPayload(array $overrides = []): array
     ], $overrides);
 }
 
+function validShippingPayload(array $overrides = []): array
+{
+    return array_merge([
+        'shipping_address' => '99 Jalan Tujuan',
+        'shipping_state' => 'Selangor',
+        'shipping_city' => 'Petaling Jaya',
+        'shipping_post_code' => '46000',
+    ], $overrides);
+}
+
 test('guest can checkout directly without cart backend', function () {
     $product = checkoutProduct();
 
     $response = $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 2,
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(),
     ]);
 
     $response->assertCreated()
         ->assertJsonPath('data.status', 'pending_payment')
         ->assertJsonPath('data.customer_name', 'Ahmad Buyer')
+        ->assertJsonPath('data.shipping_address', '99 Jalan Tujuan')
+        ->assertJsonPath('data.shipping_state', 'Selangor')
+        ->assertJsonPath('data.shipping_city', 'Petaling Jaya')
+        ->assertJsonPath('data.shipping_post_code', '46000')
         ->assertJsonPath('data.subtotal', '51.00')
         ->assertJsonPath('data.shipping_fee', '5.00')
         ->assertJsonPath('data.total', '56.00')
@@ -71,6 +87,7 @@ test('authenticated checkout links order to buyer', function () {
     $this->actingAs($buyer)->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 1,
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(),
     ])->assertCreated();
 
@@ -83,6 +100,7 @@ test('checkout validates five buyer fields', function () {
     $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 1,
+        ...validShippingPayload(),
         'buyer' => [],
     ])->assertUnprocessable()
         ->assertJsonValidationErrors([
@@ -100,6 +118,7 @@ test('checkout accepts optional buyer email', function () {
     $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 1,
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(['email' => 'buyer@example.com']),
     ])->assertCreated()
         ->assertJsonPath('data.customer_email', 'buyer@example.com');
@@ -111,6 +130,7 @@ test('checkout rejects unknown buyer state', function () {
     $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 1,
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(['state' => 'Atlantis']),
     ])->assertUnprocessable()
         ->assertJsonValidationErrors('buyer.state');
@@ -122,6 +142,7 @@ test('checkout accepts city belonging to state', function () {
     $response = $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 1,
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(['city' => 'Petaling Jaya']),
     ]);
 
@@ -146,6 +167,7 @@ test('checkout rejects insufficient stock with 409 and keeps stock', function ()
     $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 2,
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(),
     ])->assertConflict();
 
@@ -159,6 +181,7 @@ test('checkout rejects inactive products with 409', function () {
     $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 1,
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(),
     ])->assertConflict();
 
@@ -174,6 +197,7 @@ test('checkout creates multi-seller items with snapshots', function () {
             ['product_id' => $first->id, 'quantity' => 1],
             ['product_id' => $second->id, 'quantity' => 2],
         ],
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(),
     ]);
 
@@ -190,12 +214,37 @@ test('checkout creates multi-seller items with snapshots', function () {
     expect($second->refresh()->stock)->toBe(3);
 });
 
+test('checkout passes buyer city to seller origin shipping quote', function () {
+    $product = checkoutProduct(['price' => '10.00']);
+
+    ShippingRate::query()->create([
+        'from_state' => 'Selangor',
+        'from_city' => 'Shah Alam',
+        'to_state' => 'Selangor',
+        'to_city' => 'Petaling Jaya',
+        'rate' => 12.50,
+    ]);
+
+    $response = $this->postJson('/api/v1/orders', [
+        'product_id' => $product->id,
+        'quantity' => 1,
+        ...validShippingPayload(),
+        'buyer' => validBuyerPayload(['city' => 'Petaling Jaya']),
+        'shipping_method' => 'fixed',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.customer_city', 'Petaling Jaya')
+        ->assertJsonPath('data.shipping_fee', '12.50');
+});
+
 test('checkout uses fixed shipping fee from settings', function () {
     $product = checkoutProduct(['price' => '10.00']);
 
     $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 1,
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(),
         'shipping_method' => 'fixed',
     ])->assertCreated()
@@ -218,6 +267,7 @@ test('checkout confirmation page renders order totals', function () {
     $orderNumber = $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 1,
+        ...validShippingPayload(),
         'buyer' => validBuyerPayload(),
     ])->assertCreated()->json('data.order_number');
 

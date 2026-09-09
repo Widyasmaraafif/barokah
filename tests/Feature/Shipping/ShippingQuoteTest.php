@@ -5,6 +5,7 @@ use App\Exceptions\ShippingQuoteException;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Seller;
+use App\Models\ShippingRate;
 use App\Models\User;
 use App\Services\SettingsService;
 use App\Services\Shipping\ExternalShippingProvider;
@@ -32,6 +33,44 @@ function shippingTestAddress(array $overrides = []): array
         'post_code' => '40000',
     ], $overrides);
 }
+
+test('fixed quote selects seller origin and buyer destination city rate', function () {
+    $product = shippingTestProduct();
+
+    ShippingRate::query()->create([
+        'from_state' => 'Selangor',
+        'from_city' => 'Shah Alam',
+        'to_state' => 'Selangor',
+        'to_city' => 'Petaling Jaya',
+        'rate' => 12.50,
+    ]);
+
+    $response = $this->postJson('/api/v1/shipping/quote', shippingTestAddress([
+        'city' => 'Petaling Jaya',
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
+    ]));
+
+    $response->assertOk()->assertJsonPath('data.fee', 12.5);
+});
+
+test('fixed quote falls back to global destination rate', function () {
+    $product = shippingTestProduct();
+
+    ShippingRate::query()->create([
+        'from_state' => null,
+        'from_city' => null,
+        'to_state' => 'Selangor',
+        'to_city' => null,
+        'rate' => 9.00,
+    ]);
+
+    $response = $this->postJson('/api/v1/shipping/quote', shippingTestAddress([
+        'city' => 'Petaling Jaya',
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
+    ]));
+
+    $response->assertOk()->assertJsonPath('data.fee', 9);
+});
 
 test('quote returns fixed rate by default', function () {
     $response = $this->postJson('/api/v1/shipping/quote', shippingTestAddress());
@@ -68,6 +107,10 @@ test('fixed rate applies free shipping threshold and stays default in checkout',
     $orderNumber = $this->postJson('/api/v1/orders', [
         'product_id' => $product->id,
         'quantity' => 2,
+        'shipping_address' => '99 Jalan Tujuan',
+        'shipping_state' => 'Selangor',
+        'shipping_city' => 'Petaling Jaya',
+        'shipping_post_code' => '46000',
         'buyer' => [
             'name' => 'Ahmad Buyer',
             'address' => '1 Jalan Merdeka',

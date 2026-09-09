@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { show } from '@/routes/admin/settings';
+import malaysiaStates from '@/data/malaysia-states.json';
+import { getMalaysiaCities } from '@/composables/useMalaysiaCities';
 
 type AdminSettingEntry = {
     key: string;
@@ -16,6 +18,18 @@ type AdminSettingEntry = {
     is_public: boolean;
     masked: boolean;
 };
+
+type ShippingRate = {
+    id: number;
+    from_state: string | null;
+    from_city: string | null;
+    to_state: string;
+    to_city: string | null;
+    rate: string | number;
+    is_active: boolean;
+};
+
+const stateOptions = (malaysiaStates as { name: string }[]).map((state) => state.name);
 
 const props = defineProps<{
     groups: string[];
@@ -57,6 +71,110 @@ const notice = ref<string | null>(null);
 const logoFile = ref<File | null>(null);
 const faviconFile = ref<File | null>(null);
 const qrCodeFile = ref<File | null>(null);
+const shippingRates = ref<ShippingRate[]>([]);
+const newRate = reactive({ from_state: '', from_city: '', to_state: '', to_city: '', rate: '', is_active: true });
+const rateError = ref<string | null>(null);
+const isRateSaving = ref(false);
+const fromCityOptions = computed(() => {
+    const cities = getMalaysiaCities(newRate.from_state);
+    return newRate.from_state !== '' && cities.length === 0 ? [newRate.from_state] : cities;
+});
+const toCityOptions = computed(() => {
+    const cities = getMalaysiaCities(newRate.to_state);
+    return newRate.to_state !== '' && cities.length === 0 ? [newRate.to_state] : cities;
+});
+
+async function loadShippingRates(): Promise<void> {
+    const response = await fetch('/api/v1/admin/shipping-rates', {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+    });
+
+    if (response.ok) {
+        shippingRates.value = ((await response.json()) as { data: ShippingRate[] }).data;
+    }
+}
+
+async function addShippingRate(): Promise<void> {
+    isRateSaving.value = true;
+    rateError.value = null;
+
+    try {
+        const response = await fetch('/api/v1/admin/shipping-rates', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '',
+            },
+            body: JSON.stringify({
+                ...newRate,
+                from_state: newRate.from_state || null,
+                from_city: newRate.from_city || null,
+                to_city: newRate.to_city || null,
+                rate: Number(newRate.rate),
+                is_active: Boolean(newRate.is_active),
+            }),
+        });
+
+        if (!response.ok) {
+            const payload = (await response.json()) as { message?: string };
+            rateError.value = payload.message ?? 'Shipping rate could not be saved.';
+            return;
+        }
+
+        Object.assign(newRate, {
+            from_state: '',
+            from_city: '',
+            to_state: '',
+            to_city: '',
+            rate: '',
+            is_active: true,
+        });
+        await loadShippingRates();
+    } finally {
+        isRateSaving.value = false;
+    }
+}
+
+async function removeShippingRate(id: number): Promise<void> {
+    await fetch(`/api/v1/admin/shipping-rates/${id}`, {
+        method: 'DELETE',
+        credentials: 'same-origin',
+        headers: {
+            Accept: 'application/json',
+            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '',
+        },
+    });
+    await loadShippingRates();
+}
+
+watch(
+    () => newRate.from_state,
+    (state) => {
+        const cities = getMalaysiaCities(state);
+        newRate.from_city = state !== '' && cities.length === 0 ? state : '';
+    },
+);
+
+watch(
+    () => newRate.to_state,
+    (state) => {
+        const cities = getMalaysiaCities(state);
+        newRate.to_city = state !== '' && cities.length === 0 ? state : '';
+    },
+);
+
+watch(
+    () => props.activeGroup,
+    (group) => {
+        if (group === 'shipping') {
+            void loadShippingRates();
+        }
+    },
+    { immediate: true },
+);
 
 function onBrandingFile(field: 'logo' | 'favicon', event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
@@ -330,7 +448,87 @@ async function save(): Promise<void> {
                 No settings are available in this group yet.
             </p>
 
-            <form v-else class="space-y-6" @submit.prevent="save">
+            <template v-if="activeGroup === 'shipping'">
+                <div class="mb-6 rounded-lg border p-4">
+                    <h4 class="mb-4 font-medium">Add New Shipping Rate</h4>
+                    <div class="grid gap-4 md:grid-cols-4">
+                        <div class="grid gap-2">
+                            <Label for="shipping-rate-from-state">From State</Label>
+                            <select id="shipping-rate-from-state" v-model="newRate.from_state" class="h-10 rounded-md border bg-background px-3 text-sm">
+                                <option value="">Select state</option>
+                                <option v-for="state in stateOptions" :key="state" :value="state">{{ state }}</option>
+                            </select>
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="shipping-rate-from-city">From City</Label>
+                            <select id="shipping-rate-from-city" v-model="newRate.from_city" :disabled="!newRate.from_state" class="h-10 rounded-md border bg-background px-3 text-sm">
+                                <option value="">Select city</option>
+                                <option v-for="city in fromCityOptions" :key="city" :value="city">{{ city }}</option>
+                            </select>
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="shipping-rate-to-state">To State</Label>
+                            <select id="shipping-rate-to-state" v-model="newRate.to_state" class="h-10 rounded-md border bg-background px-3 text-sm">
+                                <option value="">Select state</option>
+                                <option v-for="state in stateOptions" :key="state" :value="state">{{ state }}</option>
+                            </select>
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="shipping-rate-to-city">To City</Label>
+                            <select id="shipping-rate-to-city" v-model="newRate.to_city" :disabled="!newRate.to_state" class="h-10 rounded-md border bg-background px-3 text-sm">
+                                <option value="">Select city</option>
+                                <option v-for="city in toCityOptions" :key="city" :value="city">{{ city }}</option>
+                            </select>
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="shipping-rate-amount">Rate</Label>
+                            <Input id="shipping-rate-amount" v-model="newRate.rate" type="number" min="0" step="0.01" placeholder="5.00" />
+                        </div>
+                        <div class="flex items-end gap-3">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    class="h-5 w-5"
+                                    :checked="newRate.is_active"
+                                    @change="newRate.is_active = ($event.target as HTMLInputElement).checked"
+                                />
+                                Active
+                            </label>
+                            <Button type="button" :disabled="isRateSaving || !newRate.to_state || !newRate.to_city || !newRate.rate" @click="addShippingRate">
+                                Add New Shipping Rate
+                            </Button>
+                        </div>
+                    </div>
+                    <p v-if="rateError" class="mt-3 text-sm text-destructive">{{ rateError }}</p>
+                </div>
+
+                <div v-if="shippingRates.length > 0" class="mb-6 overflow-x-auto rounded-lg border">
+                    <table class="w-full text-left text-sm">
+                        <thead class="border-b bg-muted/50">
+                            <tr>
+                                <th class="p-3">From</th>
+                                <th class="p-3">To</th>
+                                <th class="p-3">Rate</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="rate in shippingRates" :key="rate.id" class="border-b last:border-0">
+                                <td class="p-3">{{ rate.from_state ? `${rate.from_state} / ${rate.from_city ?? rate.from_state}` : 'All origins' }}</td>
+                                <td class="p-3">{{ rate.to_state }} / {{ rate.to_city ?? rate.to_state }}</td>
+                                <td class="p-3">{{ rate.rate }}</td>
+                                <td class="p-3">{{ rate.is_active ? 'Active' : 'Inactive' }}</td>
+                                <td class="p-3 text-right">
+                                    <Button type="button" variant="destructive" size="sm" @click="removeShippingRate(rate.id)">Delete</Button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+
+            <form v-if="settings.length > 0" class="space-y-6" @submit.prevent="save">
                 <div v-for="setting in visibleSettings" :key="setting.key" class="grid gap-2">
                     <Label :for="setting.key">
                         {{ settingLabel(setting.key) }}

@@ -31,6 +31,16 @@ class CheckoutController extends Controller
         return Inertia::render('Checkout/Show', [
             'product' => new ProductResource($product),
             'profile' => $this->buyerDefaults($request),
+            'cartCheckout' => false,
+        ]);
+    }
+
+    public function cart(Request $request): Response
+    {
+        return Inertia::render('Checkout/Show', [
+            'product' => null,
+            'profile' => $this->buyerDefaults($request),
+            'cartCheckout' => true,
         ]);
     }
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\SellerDashboardController;
 use App\Http\Controllers\SellerProductController;
 use App\Http\Controllers\SellerSettingsController;
+use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\ProductIndexController;
@@ -13,6 +14,10 @@ Route::get('/', HomeController::class)->name('home');
 
 Route::get('products', ProductIndexController::class)->name('products.index');
 Route::get('products/{slug}', ProductShowController::class)->name('products.show');
+Route::get('cart', CartController::class)->name('cart.show');
+
+// Multi-item cart checkout must precede the product slug route.
+Route::get('checkout/cart', [CheckoutController::class, 'cart'])->name('checkout.cart');
 
 // Direct Buy wizard (spec §6.1/§18.5); guest allowed. Confirmation lookup
 // by order_number is scoped per role in Task 7 (TBC spec §12 guest token).

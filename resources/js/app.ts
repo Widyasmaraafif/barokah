@@ -16,7 +16,10 @@ void createInertiaApp({
         switch (true) {
             case name === 'Welcome':
                 return null;
-            case name === 'Home' || name.startsWith('Product/'):
+            case name === 'Home' ||
+                name.startsWith('Product/') ||
+                name.startsWith('Cart/') ||
+                name.startsWith('Checkout/'):
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

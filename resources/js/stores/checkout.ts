@@ -71,6 +71,10 @@ export function useCheckoutStore() {
             post_code: '',
             phone: '',
             email: '',
+            shipping_address: '',
+            shipping_state: '',
+            shipping_city: '',
+            shipping_post_code: '',
         };
         state.shippingMethod = 'fixed';
         state.paymentMethod = 'fpx';

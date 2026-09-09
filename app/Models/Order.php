@@ -28,6 +28,10 @@ use Illuminate\Support\Carbon;
  * @property string $customer_post_code
  * @property string $customer_phone
  * @property string|null $customer_email
+ * @property string|null $shipping_address
+ * @property string|null $shipping_state
+ * @property string|null $shipping_city
+ * @property string|null $shipping_post_code
  * @property string $currency_code
  * @property string $subtotal
  * @property string $shipping_fee
@@ -50,6 +54,10 @@ use Illuminate\Support\Carbon;
     'customer_post_code',
     'customer_phone',
     'customer_email',
+    'shipping_address',
+    'shipping_state',
+    'shipping_city',
+    'shipping_post_code',
     'currency_code',
     'subtotal',
     'shipping_fee',

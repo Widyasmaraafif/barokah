@@ -19,8 +19,9 @@ use Illuminate\Support\Str;
  * Direct Buy checkout (spec §11.4/§14.4).
  *
  * Guest checkout is allowed; authenticated orders link user_id. Single
- * product Buy Now uses product_id/quantity; items[] allows one checkout
- * with products from multiple sellers (spec §14.3). Each item carries
+ * product Buy Now uses product_id/quantity; items[] allows one
+ * checkout with products from multiple sellers (spec §14.3). Buyer and shipping
+ * locations are stored separately; shipping destination drives quote matching. Each item carries
  * seller_id + product snapshots. Stock is reserved on order create inside
  * a DB transaction with pessimistic locks (TBC spec §24 item 10: restore
  * on expiry/failure lands in Task 7). PayNet intent is created separately
@@ -73,9 +74,10 @@ class CheckoutController extends Controller
             // Fixed Rate stays the default provider behavior (spec §16.1).
             $quote = $this->shipping->quote(
                 [
-                    'address' => $validated['buyer']['address'],
-                    'state' => $validated['buyer']['state'],
-                    'post_code' => $validated['buyer']['post_code'],
+                    'address' => $validated['shipping_address'],
+                    'state' => $validated['shipping_state'],
+                    'city' => $validated['shipping_city'] ?? null,
+                    'post_code' => $validated['shipping_post_code'],
                 ],
                 round($subtotal, 2),
                 $lines,
@@ -92,6 +94,10 @@ class CheckoutController extends Controller
                 'customer_post_code' => $validated['buyer']['post_code'],
                 'customer_phone' => $validated['buyer']['phone'],
                 'customer_email' => $validated['buyer']['email'] ?? null,
+                'shipping_address' => $validated['shipping_address'],
+                'shipping_state' => $validated['shipping_state'],
+                'shipping_city' => $validated['shipping_city'] ?? null,
+                'shipping_post_code' => $validated['shipping_post_code'],
                 'currency_code' => $currencyCode,
                 'subtotal' => $subtotal,
                 'shipping_fee' => $quote['fee'],
