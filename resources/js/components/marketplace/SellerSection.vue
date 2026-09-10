@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Link } from '@inertiajs/vue3';
+import { show as sellerShow } from '@/routes/sellers';
 import type { Seller } from '@/types/marketplace';
 
 defineProps<{
@@ -27,10 +29,11 @@ defineProps<{
         </p>
 
         <div v-else class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <article
+            <Link
                 v-for="seller in sellers"
                 :key="seller.id"
-                class="flex items-center gap-3 rounded-sm border border-[var(--border-soft)] p-3"
+                :href="sellerShow.url(seller.slug)"
+                class="flex items-center gap-3 rounded-sm border border-[var(--border-soft)] p-3 hover:border-[var(--brand-primary)]"
             >
                 <img
                     v-if="seller.profile_photo_url"
@@ -53,7 +56,7 @@ defineProps<{
                         {{ seller.city || seller.state || 'Marketplace seller' }}
                     </p>
                 </div>
-            </article>
+            </Link>
         </div>
     </section>
 </template>

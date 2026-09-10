@@ -9,12 +9,14 @@ use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\ProductIndexController;
 use App\Http\Controllers\Web\ProductShowController;
+use App\Http\Controllers\Web\SellerShowController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 
 Route::get('products', ProductIndexController::class)->name('products.index');
 Route::get('products/{slug}', ProductShowController::class)->name('products.show');
+Route::get('sellers/{slug}', SellerShowController::class)->name('sellers.show');
 Route::get('cart', CartController::class)->name('cart.show');
 
 // Multi-item cart checkout must precede the product slug route.

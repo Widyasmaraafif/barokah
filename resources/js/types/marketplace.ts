@@ -51,6 +51,9 @@ export type HomeSellerItem = {
     profile_photo_url: string | null;
     city: string | null;
     state: string | null;
+    store_location?: string | null;
+    phone?: string | null;
+    whatsapp?: string | null;
     status: string;
 };
 
