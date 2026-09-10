@@ -32,6 +32,7 @@ class CheckoutController extends Controller
             'product' => new ProductResource($product),
             'profile' => $this->buyerDefaults($request),
             'cartCheckout' => false,
+            'initialQuantity' => max(1, (int) $request->integer('quantity', 1)),
         ]);
     }
 
@@ -94,6 +95,14 @@ class CheckoutController extends Controller
                 'waybill_number' => $order->waybill_number,
                 'tracking_url' => $order->tracking_url,
                 'tracking_status' => $order->tracking_status,
+                'seller_trackings' => $order->sellerTrackings->keyBy('seller_id')->map(fn ($tracking) => [
+                    'seller_id' => $tracking->seller_id,
+                    'seller_name' => $order->items->firstWhere('seller_id', $tracking->seller_id)?->seller?->store_name,
+                    'courier' => $tracking->courier,
+                    'waybill_number' => $tracking->waybill_number,
+                    'tracking_url' => $tracking->tracking_url,
+                    'tracking_status' => $tracking->tracking_status,
+                ])->values(),
                 'expired_at' => $order->expired_at,
                 'created_at' => $order->created_at,
                 'items' => $order->items->map(fn ($item) => [

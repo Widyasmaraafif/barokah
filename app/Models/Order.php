@@ -64,12 +64,6 @@ use Illuminate\Support\Carbon;
     'total',
     'status',
     'shipping_method',
-    'shipping_provider',
-    'courier',
-    'waybill_number',
-    'tracking_url',
-    'tracking_status',
-    'notes',
     'expired_at',
 ])]
 class Order extends Model
@@ -136,6 +130,14 @@ class Order extends Model
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class);
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function sellerTrackings(): HasMany
+    {
+        return $this->hasMany(OrderSellerTracking::class);
     }
 
     /**

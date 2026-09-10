@@ -330,7 +330,7 @@ function addToCart(): void {
                             Add to Cart
                         </button>
                         <Link
-                            :href="`/checkout/${product.slug}`"
+                            :href="`/checkout/${product.slug}?quantity=${quantity}`"
                             :class="[
                                 'flex h-12 flex-1 items-center justify-center rounded-sm bg-[var(--brand-primary)] px-6 font-semibold text-white transition hover:bg-[var(--brand-primary-hover)]',
                                 isOutOfStock

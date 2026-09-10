@@ -37,12 +37,7 @@ class SellerOrderResource extends JsonResource
             'shipping_city' => $this->shipping_city,
             'shipping_post_code' => $this->shipping_post_code,
             'subtotal' => $this->items->sum('subtotal'),
-            'shipping_fee' => $this->shipping_fee,
-            'total' => $this->total,
-            'courier' => $this->courier,
-            'waybill_number' => $this->waybill_number,
-            'tracking_url' => $this->tracking_url,
-            'tracking_status' => $this->tracking_status,
+            'tracking' => $this->sellerTrackings->first(),
             'created_at' => $this->created_at,
             'items' => SellerOrderItemResource::collection($this->whenLoaded('items')),
         ];

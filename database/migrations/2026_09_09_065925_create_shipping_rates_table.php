@@ -10,12 +10,14 @@ return new class extends Migration
     {
         Schema::create('shipping_rates', function (Blueprint $table): void {
             $table->id();
-            $table->string('state', 100);
-            $table->string('city', 100)->nullable();
+            $table->string('from_state', 100)->nullable();
+            $table->string('from_city', 100)->nullable();
+            $table->string('to_state', 100);
+            $table->string('to_city', 100)->nullable();
             $table->decimal('rate', 12, 2);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->index(['state', 'city']);
+            $table->index(['to_state', 'to_city']);
         });
     }
 

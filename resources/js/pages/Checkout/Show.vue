@@ -21,6 +21,8 @@ type WizardProduct = {
     stock: number;
 };
 
+type ProductProp = WizardProduct | { data: WizardProduct };
+
 type CartCheckoutItem = {
     productId: number;
     name: string;
@@ -29,20 +31,29 @@ type CartCheckoutItem = {
 };
 
 const props = defineProps<{
-    product: WizardProduct | null;
+    product: ProductProp | null;
     profile: Record<string, string | null>;
     cartCheckout: boolean;
+    initialQuantity?: number;
 }>();
 
 const { formatAmount, getSettingValue, loadSettings } = useSettingsStore();
 const { state, setStep, setOrderNumber } = useCheckoutStore();
 const { state: cartState, clear: clearCart } = useCartStore();
 
+const product = computed<WizardProduct | null>(() => {
+    if (!props.product) {
+        return null;
+    }
+
+    return 'data' in props.product ? props.product.data : props.product;
+});
+
 void loadSettings();
 
 if (!props.cartCheckout && props.product) {
-    state.productId = props.product.id;
-    state.productSlug = props.product.slug;
+    state.productId = product.value.id;
+    state.productSlug = product.value.slug;
 }
 
 if (state.step < 1 || state.step > 4) {
@@ -114,7 +125,7 @@ watch(() => buyer.shipping_state, (nextState, prevState) => {
     }
 });
 
-const quantity = ref(state.quantity || 1);
+const quantity = ref(props.initialQuantity ?? state.quantity ?? 1);
 const shippingMethod = ref(state.shippingMethod || 'fixed');
 const shippingFee = ref<number | null>(null);
 const isLoadingShipping = ref(false);
@@ -134,7 +145,7 @@ const checkoutSubtotal = computed(() =>
               (total, item) => total + item.price * item.quantity,
               0,
           )
-        : Number(props.product?.price ?? 0) * quantity.value,
+        : Number(product.value?.price ?? 0) * quantity.value,
 );
 
 type PaymentOption = {
@@ -266,7 +277,7 @@ const itemCount = computed(() =>
 );
 
 function incrementQuantity(): void {
-    const max = props.product?.stock ?? 999;
+    const max = product.value?.stock ?? 999;
     if (quantity.value < max) {
         quantity.value += 1;
     }
@@ -349,7 +360,7 @@ function validatePersonal(): boolean {
     }
 
     if (!props.cartCheckout) {
-        const max = props.product?.stock ?? 1;
+        const max = product.value?.stock ?? 1;
         if (!Number.isInteger(quantity.value) || quantity.value < 1) {
             errors.quantity = 'Quantity must be at least 1.';
         } else if (quantity.value > max) {
@@ -456,7 +467,7 @@ async function loadShippingQuote(): Promise<void> {
                 subtotal: checkoutSubtotal.value,
                 items: props.cartCheckout
                     ? cartItems.value.map((item) => ({ product_id: item.productId, quantity: item.quantity }))
-                    : [{ product_id: props.product?.id, quantity: quantity.value }],
+                    : [{ product_id: product.value?.id, quantity: quantity.value }],
             }),
         });
         const payload = (await response.json()) as { data?: { fee?: number }; message?: string };
@@ -534,7 +545,7 @@ async function placeOrder(): Promise<void> {
                           })),
                       }
                     : {
-                          product_id: props.product?.id,
+                          product_id: product.value?.id,
                           quantity: quantity.value,
                       }),
                 buyer: {

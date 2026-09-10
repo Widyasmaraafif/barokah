@@ -20,7 +20,7 @@ class OrderController extends Controller
 
     public function show(string $orderNumber): Response
     {
-        $order = Order::query()->where('order_number', $orderNumber)->with(['items.seller', 'payment'])->firstOrFail();
+        $order = Order::query()->where('order_number', $orderNumber)->with(['items.seller', 'payment', 'sellerTrackings'])->firstOrFail();
 
         return Inertia::render('Admin/Orders/Show', [
             'order' => [
@@ -39,11 +39,6 @@ class OrderController extends Controller
                 'shipping_fee' => $order->shipping_fee,
                 'total' => $order->total,
                 'shipping_method' => $order->shipping_method,
-                'shipping_provider' => $order->shipping_provider,
-                'courier' => $order->courier,
-                'waybill_number' => $order->waybill_number,
-                'tracking_url' => $order->tracking_url,
-                'tracking_status' => $order->tracking_status,
                 'shipping_address' => $order->shipping_address,
                 'shipping_state' => $order->shipping_state,
                 'shipping_city' => $order->shipping_city,
@@ -69,7 +64,15 @@ class OrderController extends Controller
                     'price' => $item->price_snapshot,
                     'quantity' => $item->quantity,
                     'subtotal' => $item->subtotal,
+                    'seller_id' => $item->seller_id,
                     'seller' => $item->seller?->store_name,
+                ])->values(),
+                'seller_trackings' => $order->sellerTrackings->map(fn ($tracking) => [
+                    'seller_id' => $tracking->seller_id,
+                    'courier' => $tracking->courier,
+                    'waybill_number' => $tracking->waybill_number,
+                    'tracking_url' => $tracking->tracking_url,
+                    'tracking_status' => $tracking->tracking_status,
                 ])->values(),
             ],
         ]);

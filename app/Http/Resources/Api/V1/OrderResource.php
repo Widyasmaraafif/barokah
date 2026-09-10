@@ -45,6 +45,7 @@ class OrderResource extends JsonResource
             'waybill_number' => $this->waybill_number,
             'tracking_url' => $this->tracking_url,
             'tracking_status' => $this->tracking_status,
+            'seller_trackings' => $this->whenLoaded('sellerTrackings', fn () => $this->sellerTrackings),
             'expired_at' => $this->expired_at,
             'created_at' => $this->created_at,
             'items' => OrderItemResource::collection($this->whenLoaded('items')),

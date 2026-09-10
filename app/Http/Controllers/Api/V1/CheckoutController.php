@@ -79,7 +79,7 @@ class CheckoutController extends Controller
                 'post_code' => $validated['shipping_post_code'],
             ];
             $quotes = collect($prepared)->groupBy(fn (array $row): int => $row['product']->seller_id)->map(
-                fn ($sellerLines): array => $this->shipping->quote(
+                fn ($sellerLines, int $sellerId): array => ['seller_id' => $sellerId, 'quote' => $this->shipping->quote(
                     $address,
                     round((float) $sellerLines->sum('line_total'), 2),
                     $sellerLines->map(fn (array $row): array => [
@@ -87,15 +87,17 @@ class CheckoutController extends Controller
                         'quantity' => $row['quantity'],
                     ])->values()->all(),
                     $shippingMethod,
-                )
+                )]
             );
             $quote = [
                 'method' => $shippingMethod,
-                'provider' => $quotes->pluck('provider')->filter()->first(),
-                'fee' => round((float) $quotes->sum('fee'), 2),
+                'provider' => $quotes->pluck('quote.provider')->filter()->first(),
+                'fee' => round((float) $quotes->sum('quote.fee'), 2),
                 'breakdown' => $quotes->values()->map(fn (array $item, int $index): array => [
+                    'seller_id' => $item['seller_id'],
                     'label' => 'Shipping '.($index + 1),
-                    'fee' => $item['fee'],
+                    'fee' => $item['quote']['fee'],
+                    'provider' => $item['quote']['provider'],
                 ])->all(),
             ];
 
@@ -119,7 +121,6 @@ class CheckoutController extends Controller
                 'total' => $subtotal + $quote['fee'],
                 'status' => OrderStatus::PendingPayment,
                 'shipping_method' => $quote['method'],
-                'shipping_provider' => $quote['provider'],
                 'expired_at' => now()->addMinutes($expirationMinutes),
             ]);
 
@@ -140,7 +141,15 @@ class CheckoutController extends Controller
                 $product->decrement('stock', $row['quantity']);
             }
 
-            return $order->load('items');
+            foreach ($quotes as $sellerQuote) {
+                $order->sellerTrackings()->create([
+                    'seller_id' => $sellerQuote['seller_id'],
+                    'shipping_fee' => $sellerQuote['quote']['fee'],
+                    'shipping_provider' => $sellerQuote['quote']['provider'],
+                ]);
+            }
+
+            return $order->load(['items', 'sellerTrackings']);
         });
 
         return (new OrderResource($order))->response()->setStatusCode(201);

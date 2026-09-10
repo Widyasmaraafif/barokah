@@ -7,8 +7,9 @@ import { index } from '@/routes/seller/orders';
 import { formatPrice } from '@/services/priceFormatter';
 
 type OrderItem = { id: number; product_name: string; price: string | number; quantity: number; subtotal: string | number };
+type SellerTracking = { courier?: string | null; waybill_number?: string | null; tracking_url?: string | null; tracking_status?: string | null };
 type SellerOrder = {
-    courier?: string | null; waybill_number?: string | null; tracking_url?: string | null; tracking_status?: string | null;
+    tracking?: SellerTracking | null;
     subtotal: string | number; shipping_fee: string | number; total: string | number; currency_code: string; items: OrderItem[];
     status?: string | null; created_at?: string | null; customer_name: string; customer_address: string; customer_state: string;
     customer_city?: string | null; customer_post_code: string; shipping_address?: string | null; shipping_state?: string | null;
@@ -28,7 +29,7 @@ onMounted(async () => {
     const response = await fetch(`/api/v1/seller/orders/${props.orderNumber}`, { headers: { Accept: 'application/json' } });
     if (!response.ok) { message.value = 'Order unavailable.'; return; }
     order.value = (await response.json() as { data: SellerOrder }).data;
-    courier.value = order.value.courier ?? ''; waybillNumber.value = order.value.waybill_number ?? ''; trackingUrl.value = order.value.tracking_url ?? ''; trackingStatus.value = order.value.tracking_status ?? 'packed';
+    courier.value = order.value.tracking?.courier ?? ''; waybillNumber.value = order.value.tracking?.waybill_number ?? ''; trackingUrl.value = order.value.tracking?.tracking_url ?? ''; trackingStatus.value = order.value.tracking?.tracking_status ?? 'packed';
 });
 async function save(): Promise<void> { const response = await fetch(`/api/v1/seller/orders/${props.orderNumber}`, { method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '' }, body: JSON.stringify({ courier: courier.value || null, waybill_number: waybillNumber.value || null, tracking_url: trackingUrl.value || null, tracking_status: trackingStatus.value }) }); message.value = response.ok ? 'Tracking saved.' : 'Tracking save failed.'; }
 defineOptions({ layout: { breadcrumbs: [{ title: 'Customer orders', href: index() }] } });

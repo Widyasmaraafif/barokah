@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string('transaction_id')->nullable()->unique();
             $table->json('payload')->nullable();
             $table->json('callback_payload')->nullable();
+            $table->string('proof_path')->nullable();
+            $table->timestamp('proof_uploaded_at')->nullable();
             $table->timestamp('paid_at')->nullable();
             $table->timestamp('failed_at')->nullable();
             $table->timestamps();

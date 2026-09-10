@@ -47,10 +47,14 @@ class SellerOrderController extends Controller
             ->whereHas('payment', fn ($query) => $query->whereIn('status', [PaymentStatus::Paid, 'verified']))
             ->firstOrFail();
 
-        $order->update($validated);
+        $tracking = $order->sellerTrackings()->updateOrCreate(
+            ['seller_id' => $sellerId],
+            $validated,
+        );
 
         return new SellerOrderResource($order->refresh()->load([
             'items' => fn ($query) => $query->where('seller_id', $sellerId),
+            'sellerTrackings' => fn ($query) => $query->whereKey($tracking->id),
         ]));
     }
 
@@ -68,7 +72,7 @@ class SellerOrderController extends Controller
             ->where('order_number', $orderNumber)
             ->whereHas('items', fn ($query) => $query->where('seller_id', $sellerId))
             ->whereHas('payment', fn ($query) => $query->whereIn('status', [PaymentStatus::Paid, 'verified']))
-            ->with(['items' => fn ($query) => $query->where('seller_id', $sellerId)])
+            ->with(['items' => fn ($query) => $query->where('seller_id', $sellerId), 'sellerTrackings' => fn ($query) => $query->where('seller_id', $sellerId)])
             ->first();
 
         if ($order === null || $request->user()?->cannot('view', $order)) {

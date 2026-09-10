@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderSellerTracking;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -55,6 +56,7 @@ class OrderSeeder extends Seeder
             }
 
             $shippingFee = (float) $orderData['shipping_fee'];
+            unset($orderData['shipping_provider'], $orderData['notes']);
             $orderData['subtotal'] = number_format($itemsSubtotal, 2, '.', '');
             $orderData['total'] = number_format($itemsSubtotal + $shippingFee, 2, '.', '');
 
@@ -81,6 +83,20 @@ class OrderSeeder extends Seeder
                         'quantity' => $row['quantity'],
                         'subtotal' => number_format((float) $row['line_total'], 2, '.', ''),
                     ]
+                );
+            }
+
+            foreach (collect($prepared)->groupBy(fn (array $row): int => $row['product']->seller_id) as $sellerId => $sellerLines) {
+                $sellerSubtotal = (float) $sellerLines->sum('line_total');
+                $sellerShippingFee = $itemsSubtotal > 0 ? $shippingFee * $sellerSubtotal / $itemsSubtotal : 0;
+
+                OrderSellerTracking::query()->updateOrCreate(
+                    ['order_id' => $order->id, 'seller_id' => $sellerId],
+                    [
+                        'shipping_fee' => number_format($sellerShippingFee, 2, '.', ''),
+                        'shipping_provider' => null,
+                        'tracking_status' => 'packed',
+                    ],
                 );
             }
         }

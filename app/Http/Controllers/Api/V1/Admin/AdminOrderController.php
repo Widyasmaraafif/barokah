@@ -40,7 +40,7 @@ class AdminOrderController extends Controller
     {
         $order = Order::query()
             ->where('order_number', $orderNumber)
-            ->with('items')
+            ->with(['items', 'sellerTrackings'])
             ->firstOrFail();
 
         return new OrderResource($order);
@@ -56,8 +56,11 @@ class AdminOrderController extends Controller
         ]);
 
         $order = Order::query()->where('order_number', $orderNumber)->firstOrFail();
-        $order->update($validated);
+        $sellerId = $validated['seller_id'];
+        unset($validated['seller_id']);
+        abort_unless($order->items()->where('seller_id', $sellerId)->exists(), 422);
+        OrderSellerTracking::updateOrCreate(['order_id' => $order->id, 'seller_id' => $sellerId], $validated);
 
-        return new OrderResource($order->refresh());
+        return new OrderResource($order->refresh()->load('sellerTrackings'));
     }
 }

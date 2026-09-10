@@ -43,6 +43,7 @@ type ConfirmationOrder = {
     expired_at: string | null;
     created_at: string | null;
     items: ConfirmationItem[];
+    seller_trackings?: Array<{ seller_id: number; seller_name?: string | null; courier?: string | null; waybill_number?: string | null; tracking_url?: string | null; tracking_status?: string | null }>;
 };
 
 const props = defineProps<{ order: ConfirmationOrder }>();
@@ -515,23 +516,23 @@ onBeforeUnmount(() => {
                     </p>
                 </section>
 
-                <section v-if="order.courier || order.waybill_number || order.tracking_url" class="rounded border bg-white p-5 text-sm">
-                    <h2 class="text-sm font-semibold">Order tracking</h2>
+                <section v-for="tracking in (order.seller_trackings ?? [])" :key="tracking.seller_id" v-if="tracking.courier || tracking.waybill_number || tracking.tracking_url" class="rounded border bg-white p-5 text-sm">
+                    <h2 class="text-sm font-semibold">Tracking {{ tracking.seller_name ? `- ${tracking.seller_name}` : '' }}</h2>
                     <dl class="mt-2 space-y-1">
-                        <div v-if="order.courier" class="flex justify-between gap-3">
+                        <div v-if="tracking.courier" class="flex justify-between gap-3">
                             <dt class="text-muted-foreground">Courier</dt>
-                            <dd class="font-medium">{{ order.courier }}</dd>
+                            <dd class="font-medium">{{ tracking.courier }}</dd>
                         </div>
                         <div v-if="order.waybill_number" class="flex justify-between gap-3">
                             <dt class="text-muted-foreground">Waybill number</dt>
                             <dd class="font-medium">{{ order.waybill_number }}</dd>
                         </div>
-                        <div v-if="order.tracking_status" class="flex justify-between gap-3">
+                        <div v-if="tracking.tracking_status" class="flex justify-between gap-3">
                             <dt class="text-muted-foreground">Status</dt>
-                            <dd class="font-medium">{{ order.tracking_status }}</dd>
+                            <dd class="font-medium">{{ tracking.tracking_status }}</dd>
                         </div>
                     </dl>
-                    <a v-if="order.tracking_url" :href="order.tracking_url" target="_blank" rel="noopener" class="mt-3 inline-block underline">
+                    <a v-if="tracking.tracking_url" :href="tracking.tracking_url" target="_blank" rel="noopener" class="mt-3 inline-block underline">
                         Track shipment
                     </a>
                 </section>
