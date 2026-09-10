@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SellerDashboardController;
+use App\Http\Controllers\SellerOrderController;
 use App\Http\Controllers\SellerProductController;
 use App\Http\Controllers\SellerSettingsController;
 use App\Http\Controllers\Web\CartController;
@@ -23,6 +24,7 @@ Route::get('checkout/cart', [CheckoutController::class, 'cart'])->name('checkout
 // by order_number is scoped per role in Task 7 (TBC spec §12 guest token).
 Route::get('checkout/{slug}', [CheckoutController::class, 'show'])->name('checkout.show');
 Route::get('checkout/confirmation/{orderNumber}', [CheckoutController::class, 'confirmation'])->name('checkout.confirmation');
+Route::get('checkout/order/{orderNumber}', [CheckoutController::class, 'confirmation'])->name('checkout.resume');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
@@ -33,6 +35,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('seller/settings', SellerSettingsController::class)
         ->middleware('can:seller')
         ->name('seller.settings');
+    Route::get('seller/orders', [SellerOrderController::class, 'index'])
+        ->middleware('can:seller')
+        ->name('seller.orders.index');
+    Route::get('seller/orders/{orderNumber}', [SellerOrderController::class, 'show'])
+        ->middleware('can:seller')
+        ->name('seller.orders.show');
     Route::get('seller/products', [SellerProductController::class, 'index'])
         ->middleware('can:seller')
         ->name('seller.products.index');

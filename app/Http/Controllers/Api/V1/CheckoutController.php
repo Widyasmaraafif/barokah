@@ -72,17 +72,32 @@ class CheckoutController extends Controller
             /** @var Order $order */
             // Snapshot the ShippingService quote on the order (spec §16.2);
             // Fixed Rate stays the default provider behavior (spec §16.1).
-            $quote = $this->shipping->quote(
-                [
-                    'address' => $validated['shipping_address'],
-                    'state' => $validated['shipping_state'],
-                    'city' => $validated['shipping_city'] ?? null,
-                    'post_code' => $validated['shipping_post_code'],
-                ],
-                round($subtotal, 2),
-                $lines,
-                $shippingMethod,
+            $address = [
+                'address' => $validated['shipping_address'],
+                'state' => $validated['shipping_state'],
+                'city' => $validated['shipping_city'] ?? null,
+                'post_code' => $validated['shipping_post_code'],
+            ];
+            $quotes = collect($prepared)->groupBy(fn (array $row): int => $row['product']->seller_id)->map(
+                fn ($sellerLines): array => $this->shipping->quote(
+                    $address,
+                    round((float) $sellerLines->sum('line_total'), 2),
+                    $sellerLines->map(fn (array $row): array => [
+                        'product_id' => $row['product']->id,
+                        'quantity' => $row['quantity'],
+                    ])->values()->all(),
+                    $shippingMethod,
+                )
             );
+            $quote = [
+                'method' => $shippingMethod,
+                'provider' => $quotes->pluck('provider')->filter()->first(),
+                'fee' => round((float) $quotes->sum('fee'), 2),
+                'breakdown' => $quotes->values()->map(fn (array $item, int $index): array => [
+                    'label' => 'Shipping '.($index + 1),
+                    'fee' => $item['fee'],
+                ])->all(),
+            ];
 
             $order = Order::query()->create([
                 'order_number' => $this->uniqueOrderNumber(),

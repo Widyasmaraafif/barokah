@@ -81,6 +81,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::put('seller/settings', [SellerSettingsController::class, 'update'])->name('seller.settings.update');
             Route::get('seller/orders', [SellerOrderController::class, 'index'])->name('seller.orders.index');
             Route::get('seller/orders/{orderNumber}', [SellerOrderController::class, 'show'])->name('seller.orders.show');
+            Route::put('seller/orders/{orderNumber}', [SellerOrderController::class, 'update'])->name('seller.orders.update');
             // Products resolve by ID here (spec §11.3 `{id}`); the public
             // detail route resolves by slug via Product::getRouteKeyName().
             Route::get('seller/products', [SellerProductController::class, 'index'])->name('seller.products.index');
@@ -96,6 +97,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::middleware('can:admin')->group(function (): void {
             Route::get('admin/orders', [AdminOrderController::class, 'index'])->name('admin.orders.index');
             Route::get('admin/orders/{orderNumber}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
+            Route::put('admin/orders/{orderNumber}', [AdminOrderController::class, 'update'])->name('admin.orders.update');
 
             Route::get('admin/settings', [AdminSettingController::class, 'index'])->name('admin.settings.index');
             Route::put('admin/settings', [AdminSettingController::class, 'update'])->name('admin.settings.update');

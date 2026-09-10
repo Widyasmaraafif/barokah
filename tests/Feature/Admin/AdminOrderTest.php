@@ -84,6 +84,33 @@ test('guests and buyers cannot view admin order detail', function () {
     $this->actingAs($buyer)->get(route('admin.orders.show', $order->order_number))->assertForbidden();
 });
 
+test('admin updates order tracking fields', function () {
+    $admin = adminOrderViewer();
+    $order = Order::factory()->create();
+
+    $this->actingAs($admin)->putJson('/api/v1/admin/orders/'.$order->order_number, [
+        'courier' => 'JNE',
+        'waybill_number' => 'JNE123',
+        'tracking_url' => 'https://jne.co.id/track/JNE123',
+        'tracking_status' => 'shipped',
+    ])->assertOk()
+        ->assertJsonPath('data.courier', 'JNE')
+        ->assertJsonPath('data.waybill_number', 'JNE123')
+        ->assertJsonPath('data.tracking_status', 'shipped');
+
+    expect($order->refresh()->tracking_url)->toBe('https://jne.co.id/track/JNE123');
+});
+
+test('pending order can reopen checkout confirmation before expiry', function () {
+    $order = Order::factory()->create(['expired_at' => now()->addHour()]);
+
+    $this->get(route('checkout.resume', $order->order_number))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Checkout/Confirmation')
+            ->where('order.order_number', $order->order_number));
+});
+
 test('admin order detail returns not found for unknown number', function () {
     $admin = adminOrderViewer();
 

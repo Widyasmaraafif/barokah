@@ -42,6 +42,7 @@ import {
     settings as sellerSettings,
 } from '@/routes/seller';
 import { index as sellerProductsIndex } from '@/routes/seller/products';
+import { index as sellerOrdersIndex } from '@/routes/seller/orders';
 import type { NavItem } from '@/types';
 
 type SidebarUser = {
@@ -88,6 +89,11 @@ const sellerNavItems: NavItem[] = [
         title: 'Seller products',
         href: sellerProductsIndex(),
         icon: Package,
+    },
+    {
+        title: 'Customer orders',
+        href: sellerOrdersIndex(),
+        icon: ShoppingBag,
     },
     {
         title: 'Store settings',

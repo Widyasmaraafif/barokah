@@ -1034,9 +1034,10 @@ const sectionHintClass = 'mt-1 text-sm text-[var(--text-muted)]';
                             </label>
                             <div class="mt-3 rounded-sm border border-[var(--border-soft)] bg-[var(--bg-muted)] px-4 py-3 text-sm">
                                 <p v-if="isLoadingShipping" class="animate-pulse text-[var(--text-muted)]">Calculating shipping rate…</p>
-                                <p v-else-if="shippingFee !== null" class="font-medium text-[var(--text-primary)]">
-                                    Shipping fee: {{ formatAmount(shippingFee) }}
-                                </p>
+                                <template v-else-if="shippingFee !== null">
+                                    <p v-for="shipment in shippingBreakdown" :key="shipment.label" class="font-medium text-[var(--text-primary)]">{{ shipment.label }}: {{ formatAmount(shipment.fee) }}</p>
+                                    <p class="font-medium text-[var(--text-primary)]">Total shipping: {{ formatAmount(shippingFee) }}</p>
+                                </template>
                                 <p v-else class="text-[var(--text-muted)]">Continue to calculate the exact shipping fee for this address.</p>
                                 <p v-if="shippingError" class="mt-1 text-red-600">{{ shippingError }}</p>
                             </div>

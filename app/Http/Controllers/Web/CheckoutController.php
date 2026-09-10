@@ -60,6 +60,10 @@ class CheckoutController extends Controller
             abort(404);
         }
 
+        if ($order->isExpired()) {
+            abort(404);
+        }
+
         return Inertia::render('Checkout/Confirmation', [
             'order' => [
                 'order_number' => $order->order_number,
@@ -86,6 +90,10 @@ class CheckoutController extends Controller
                 'total' => $order->total,
                 'shipping_method' => $order->shipping_method,
                 'shipping_provider' => $order->shipping_provider,
+                'courier' => $order->courier,
+                'waybill_number' => $order->waybill_number,
+                'tracking_url' => $order->tracking_url,
+                'tracking_status' => $order->tracking_status,
                 'expired_at' => $order->expired_at,
                 'created_at' => $order->created_at,
                 'items' => $order->items->map(fn ($item) => [

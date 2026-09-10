@@ -49,6 +49,10 @@ type AdminOrderDetail = {
     total: string | number;
     shipping_method: string;
     shipping_provider?: string | null;
+    courier?: string | null;
+    waybill_number?: string | null;
+    tracking_url?: string | null;
+    tracking_status?: string | null;
     notes?: string | null;
     expired_at?: string | null;
     created_at?: string | null;
@@ -118,6 +122,25 @@ const isPaymentPending = computed(
 );
 const isVerifying = ref(false);
 const verifyError = ref<string | null>(null);
+const courier = ref(props.order.courier ?? '');
+const waybillNumber = ref(props.order.waybill_number ?? '');
+const trackingUrl = ref(props.order.tracking_url ?? '');
+const trackingStatus = ref(props.order.tracking_status ?? '');
+const isSavingTracking = ref(false);
+const trackingMessage = ref<string | null>(null);
+
+async function saveTracking(): Promise<void> {
+    isSavingTracking.value = true;
+    trackingMessage.value = null;
+    const response = await fetch(`/api/v1/admin/orders/${props.order.order_number}`, {
+        method: 'PUT', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '' },
+        body: JSON.stringify({ courier: courier.value || null, waybill_number: waybillNumber.value || null, tracking_url: trackingUrl.value || null, tracking_status: trackingStatus.value || null }),
+    });
+    trackingMessage.value = response.ok ? 'Tracking saved.' : 'Tracking save failed.';
+    isSavingTracking.value = false;
+    if (response.ok) router.reload();
+}
 
 async function verify(status: 'paid' | 'failed'): Promise<void> {
     if (!props.order.payment) {
@@ -411,6 +434,21 @@ async function verify(status: 'paid' | 'failed'): Promise<void> {
                             </td>
                         </tr>
                         <tr class="border-b last:border-0">
+                            <th class="text-muted-foreground w-32 px-3 py-2 align-top font-medium">Courier</th>
+                            <td class="px-3 py-2">{{ displayText(order.courier) }}</td>
+                        </tr>
+                        <tr class="border-b last:border-0">
+                            <th class="text-muted-foreground w-32 px-3 py-2 align-top font-medium">Waybill</th>
+                            <td class="px-3 py-2">{{ displayText(order.waybill_number) }}</td>
+                        </tr>
+                        <tr class="border-b last:border-0">
+                            <th class="text-muted-foreground w-32 px-3 py-2 align-top font-medium">Tracking</th>
+                            <td class="px-3 py-2">
+                                <a v-if="order.tracking_url" :href="order.tracking_url" target="_blank" rel="noopener" class="underline">{{ order.tracking_status ?? 'Open tracking' }}</a>
+                                <span v-else>{{ displayText(order.tracking_status) }}</span>
+                            </td>
+                        </tr>
+                        <tr class="border-b last:border-0">
                             <th
                                 class="text-muted-foreground w-32 px-3 py-2 align-top font-medium"
                             >
@@ -581,6 +619,23 @@ async function verify(status: 'paid' | 'failed'): Promise<void> {
                     {{ verifyError }}
                 </p>
             </div>
+        </div>
+
+        <div class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
+            <h3 class="mb-3 text-base font-medium">Courier & tracking</h3>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <input v-model="courier" placeholder="Courier provider" class="rounded border px-3 py-2 text-sm" />
+                <input v-model="waybillNumber" placeholder="Waybill number" class="rounded border px-3 py-2 text-sm" />
+                <input v-model="trackingUrl" placeholder="Tracking URL" type="url" class="rounded border px-3 py-2 text-sm" />
+                <select v-model="trackingStatus" class="rounded border px-3 py-2 text-sm">
+                    <option value="">Select tracking status</option>
+                    <option v-for="status in ['packed', 'shipped', 'in_transit', 'delivered']" :key="status" :value="status">{{ status }}</option>
+                </select>
+            </div>
+            <button type="button" :disabled="isSavingTracking" class="mt-3 rounded bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50" @click="saveTracking">
+                {{ isSavingTracking ? 'Saving…' : 'Save tracking' }}
+            </button>
+            <p v-if="trackingMessage" class="mt-2 text-sm text-muted-foreground">{{ trackingMessage }}</p>
         </div>
     </div>
 </template>

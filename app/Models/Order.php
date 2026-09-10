@@ -65,6 +65,10 @@ use Illuminate\Support\Carbon;
     'status',
     'shipping_method',
     'shipping_provider',
+    'courier',
+    'waybill_number',
+    'tracking_url',
+    'tracking_status',
     'notes',
     'expired_at',
 ])]

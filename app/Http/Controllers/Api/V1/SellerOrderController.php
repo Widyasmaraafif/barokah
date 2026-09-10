@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\SellerOrderResource;
 use App\Models\Order;
@@ -22,11 +23,35 @@ class SellerOrderController extends Controller
 
         $orders = Order::query()
             ->whereHas('items', fn ($query) => $query->where('seller_id', $sellerId))
+            ->whereHas('payment', fn ($query) => $query->whereIn('status', [PaymentStatus::Paid, 'verified']))
             ->with(['items' => fn ($query) => $query->where('seller_id', $sellerId)])
             ->latest()
             ->paginate(15);
 
         return SellerOrderResource::collection($orders);
+    }
+
+    public function update(Request $request, string $orderNumber): SellerOrderResource
+    {
+        $sellerId = $request->user()->seller()->value('id');
+        $validated = $request->validate([
+            'courier' => ['nullable', 'string', 'max:255'],
+            'waybill_number' => ['nullable', 'string', 'max:255'],
+            'tracking_url' => ['nullable', 'url', 'max:500'],
+            'tracking_status' => ['required', 'in:packed,shipped'],
+        ]);
+
+        $order = Order::query()
+            ->where('order_number', $orderNumber)
+            ->whereHas('items', fn ($query) => $query->where('seller_id', $sellerId))
+            ->whereHas('payment', fn ($query) => $query->whereIn('status', [PaymentStatus::Paid, 'verified']))
+            ->firstOrFail();
+
+        $order->update($validated);
+
+        return new SellerOrderResource($order->refresh()->load([
+            'items' => fn ($query) => $query->where('seller_id', $sellerId),
+        ]));
     }
 
     /**
@@ -42,6 +67,7 @@ class SellerOrderController extends Controller
         $order = Order::query()
             ->where('order_number', $orderNumber)
             ->whereHas('items', fn ($query) => $query->where('seller_id', $sellerId))
+            ->whereHas('payment', fn ($query) => $query->whereIn('status', [PaymentStatus::Paid, 'verified']))
             ->with(['items' => fn ($query) => $query->where('seller_id', $sellerId)])
             ->first();
 

@@ -36,6 +36,10 @@ type ConfirmationOrder = {
     total: string | number;
     shipping_method: string;
     shipping_provider?: string | null;
+    courier?: string | null;
+    waybill_number?: string | null;
+    tracking_url?: string | null;
+    tracking_status?: string | null;
     expired_at: string | null;
     created_at: string | null;
     items: ConfirmationItem[];
@@ -509,6 +513,27 @@ onBeforeUnmount(() => {
                     <p v-if="order.shipping_provider" class="mt-1 text-xs text-muted-foreground">
                         {{ order.shipping_method }} · {{ order.shipping_provider }}
                     </p>
+                </section>
+
+                <section v-if="order.courier || order.waybill_number || order.tracking_url" class="rounded border bg-white p-5 text-sm">
+                    <h2 class="text-sm font-semibold">Order tracking</h2>
+                    <dl class="mt-2 space-y-1">
+                        <div v-if="order.courier" class="flex justify-between gap-3">
+                            <dt class="text-muted-foreground">Courier</dt>
+                            <dd class="font-medium">{{ order.courier }}</dd>
+                        </div>
+                        <div v-if="order.waybill_number" class="flex justify-between gap-3">
+                            <dt class="text-muted-foreground">Waybill number</dt>
+                            <dd class="font-medium">{{ order.waybill_number }}</dd>
+                        </div>
+                        <div v-if="order.tracking_status" class="flex justify-between gap-3">
+                            <dt class="text-muted-foreground">Status</dt>
+                            <dd class="font-medium">{{ order.tracking_status }}</dd>
+                        </div>
+                    </dl>
+                    <a v-if="order.tracking_url" :href="order.tracking_url" target="_blank" rel="noopener" class="mt-3 inline-block underline">
+                        Track shipment
+                    </a>
                 </section>
 
                 <section class="rounded border bg-white p-5 text-sm">

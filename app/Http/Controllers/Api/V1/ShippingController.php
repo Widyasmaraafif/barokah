@@ -28,17 +28,24 @@ class ShippingController extends Controller
         $subtotal = $this->subtotal($validated, $lines);
 
         try {
-            $quote = $this->shipping->quote(
-                [
-                    'address' => $validated['address'],
-                    'state' => $validated['state'],
-                    'city' => $validated['city'] ?? null,
-                    'post_code' => $validated['post_code'],
-                ],
-                $subtotal,
-                $lines,
-                $validated['method'] ?? null,
+            $address = [
+                'address' => $validated['address'],
+                'state' => $validated['state'],
+                'city' => $validated['city'] ?? null,
+                'post_code' => $validated['post_code'],
+            ];
+            $products = Product::query()->whereKey(array_column($lines, 'product_id'))->get()->keyBy('id');
+            $quotes = collect($lines)->groupBy(fn (array $line): int => (int) $products[$line['product_id']]->seller_id)->map(
+                fn ($sellerLines): array => $this->shipping->quote($address, $this->subtotal(['items' => $sellerLines->all()], $sellerLines->all()), $sellerLines->all(), $validated['method'] ?? null)
             );
+            $quote = [
+                'method' => $validated['method'] ?? 'fixed',
+                'provider' => $quotes->pluck('provider')->filter()->first(),
+                'fee' => round((float) $quotes->sum('fee'), 2),
+                'formatted' => (string) $quotes->sum('fee'),
+                'currency_code' => $quotes->first()['currency_code'] ?? config('marketplace.currency.code', 'MYR'),
+                'meta' => ['breakdown' => $quotes->values()->map(fn (array $item, int $index): array => ['label' => 'Shipping '.($index + 1), 'fee' => $item['fee']])->all()],
+            ];
         } catch (ShippingQuoteException $exception) {
             return response()->json(['message' => $exception->getMessage()], 500);
         }

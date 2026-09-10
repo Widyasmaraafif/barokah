@@ -71,6 +71,10 @@ class PaymentController extends Controller
             return response()->json(['message' => 'No payment found for this order.'], 404);
         }
 
+        if (! $order->isPayable()) {
+            abort(409, 'Order is no longer payable.');
+        }
+
         try {
             $payment = $this->payments->storeProof($order->payment, $validated['proof']);
         } catch (InvalidArgumentException $e) {

@@ -45,4 +45,19 @@ class AdminOrderController extends Controller
 
         return new OrderResource($order);
     }
+
+    public function update(Request $request, string $orderNumber): OrderResource
+    {
+        $validated = $request->validate([
+            'courier' => ['nullable', 'string', 'max:255'],
+            'waybill_number' => ['nullable', 'string', 'max:255'],
+            'tracking_url' => ['nullable', 'url', 'max:500'],
+            'tracking_status' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $order = Order::query()->where('order_number', $orderNumber)->firstOrFail();
+        $order->update($validated);
+
+        return new OrderResource($order->refresh());
+    }
 }
